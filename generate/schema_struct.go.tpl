@@ -48,6 +48,7 @@ type {{.TableName}} struct {
     {{end}}
 
     changedFields map[string]any
+    changedFieldsList []string
     serialFields []*client.SelectedField
 
     ctx context.Context
@@ -218,7 +219,11 @@ func (t *{{$.TableName}}) Get{{.GetName}}() {{.GetType}}{
 
 {{range .Fields}}
 func (t *{{$.TableName}}) Set{{.GetName}}Field(){
-    t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
+    if _, exist := t.changedFields[{{$.TableName}}{{.GetName}}Field]; !exist{
+        t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
+        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}{{.GetName}}Field)
+    }
+
 }{{end}}
 
 {{range .Relations}}
@@ -295,7 +300,8 @@ func (t *{{$.TableName}}List) clean{{.GetRelationField}}(){
 
 func (t *{{$.TableName}}) Default(){
     {{range .Fields}}{{if .IsDefault}}t.{{.GetNameLower}} = {{.GetDefault}}
-    t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}{{end}}
+    t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
+    t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}{{.GetName}}Field){{end}}
     {{end}}
 
     {{range .Fields}}{{if .IsSerial}}{{if .IsNillable}}
@@ -371,11 +377,11 @@ func (t *{{.TableName}}) Refresh() error{
 }
 
 func (t *{{.TableName}}) Create() error{
-    return t.client.Create(t.ctx, {{.TableName}}TableName, t.changedFields, t.serialFields)
+    return t.client.Create(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, t.serialFields)
 }
 
 func (t *{{.TableName}}) Update() error{
-    return t.client.Update(t.ctx, {{.TableName}}TableName, t.changedFields, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+    return t.client.Update(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
 }
 
 func (t *{{.TableName}}) Delete() error{

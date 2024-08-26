@@ -24,7 +24,7 @@ type Where struct {
 
 func (w *Where) GetSqlString(tableName string) string {
 	if w.HasValue {
-		return fmt.Sprintf(w.Type, tableName, w.Name, "@"+w.Name)
+		return fmt.Sprintf(w.Type, tableName, w.Name, fmt.Sprintf("@%s__%s", tableName, w.Name))
 	} else {
 		return fmt.Sprintf(w.Type, tableName, w.Name)
 	}

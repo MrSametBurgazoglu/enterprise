@@ -1,5 +1,7 @@
 package client
 
+import "fmt"
+
 type WhereList struct {
 	Items []*Where
 }
@@ -13,7 +15,7 @@ func (w *WhereList) Parse(tableName string) *Res {
 			continue
 		}
 		res.Values = append(res.Values, item.Value)
-		res.Names = append(res.Names, item.Name)
+		res.Names = append(res.Names, fmt.Sprintf("%s__%s", tableName, item.Name))
 	}
 	sql := withAndClause(whereStrings)
 	res.SqlString = sql

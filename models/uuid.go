@@ -24,7 +24,7 @@ func (u *UUIDDBField) GetDefault() string {
 }
 
 func (u *UUIDDBField) PrepareFunc() string {
-	return "&uuid.Nil"
+	return "&uuid.UUID{}"
 }
 
 func UUIDField(name string) *UUIDDBField {

@@ -32,7 +32,7 @@ func NewClient(d DatabaseClient) *Client {
 	return &Client{Database: d}
 }
 
-func CreateTableNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
+func createTableNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
 	for _, field := range result.GetSelectedFields() {
 		selectedNames = append(selectedNames, fmt.Sprintf("\"%s\".\"%s\"", result.GetDBName(), field.Name))
 		selectedAddress = append(selectedAddress, field.Value)
@@ -40,7 +40,7 @@ func CreateTableNameAndAddresses(result Result, selectedNames []string, selected
 	return selectedNames, selectedAddress
 }
 
-func CreateTableRelationNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
+func createTableRelationNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
 	for _, field := range result.GetSelectedFields() {
 		selectedNames = append(selectedNames, fmt.Sprintf("\"%s\".\"%s\"", result.GetDBName(), field.Name))
 		selectedAddress = append(selectedAddress, field.Value)
@@ -48,15 +48,15 @@ func CreateTableRelationNameAndAddresses(result Result, selectedNames []string, 
 	return selectedNames, selectedAddress
 }
 
-func CreateTableRelationsNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
+func createTableRelationsNameAndAddresses(result Result, selectedNames []string, selectedAddress []any) ([]string, []any) {
 	for _, relation := range result.GetRelations() {
-		selectedNames, selectedAddress = CreateTableRelationNameAndAddresses(relation, selectedNames, selectedAddress)
-		selectedNames, selectedAddress = CreateTableRelationsNameAndAddresses(relation, selectedNames, selectedAddress)
+		selectedNames, selectedAddress = createTableRelationNameAndAddresses(relation, selectedNames, selectedAddress)
+		selectedNames, selectedAddress = createTableRelationsNameAndAddresses(relation, selectedNames, selectedAddress)
 	}
 	return selectedNames, selectedAddress
 }
 
-func CreateTableWhereSql(list []*WhereList, args pgx.NamedArgs, dbName string) []string {
+func createTableWhereSql(list []*WhereList, args pgx.NamedArgs, dbName string) []string {
 	var whereStrings []string
 	for _, item := range list {
 		res := item.Parse(dbName)
@@ -68,7 +68,7 @@ func CreateTableWhereSql(list []*WhereList, args pgx.NamedArgs, dbName string) [
 	return whereStrings
 }
 
-func CreateTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []string) {
+func createTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []string) {
 	sqlString := ""
 	var relationWhereStrings []string
 	for _, rel := range model.GetRelationList().Relations {
@@ -81,7 +81,7 @@ func CreateTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []str
 				args[s] = res.Values[i]
 			}
 		}
-		a, b := CreateTableRelationWhereSql(rel.RelationModel, args)
+		a, b := createTableRelationWhereSql(rel.RelationModel, args)
 		sqlString += " " + a
 		relationWhereStrings = append(relationWhereStrings, b...)
 	}
@@ -91,12 +91,12 @@ func CreateTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []str
 func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, []any, pgx.NamedArgs) {
 	var selectedNames []string
 	var selectedAddress []any
-	selectedNames, selectedAddress = CreateTableNameAndAddresses(result, selectedNames, selectedAddress)
-	selectedNames, selectedAddress = CreateTableRelationsNameAndAddresses(result, selectedNames, selectedAddress)
+	selectedNames, selectedAddress = createTableNameAndAddresses(result, selectedNames, selectedAddress)
+	selectedNames, selectedAddress = createTableRelationsNameAndAddresses(result, selectedNames, selectedAddress)
 
 	args := pgx.NamedArgs{}
-	whereStrings := CreateTableWhereSql(list, args, result.GetDBName())
-	relationSqlString, relationWhereStrings := CreateTableRelationWhereSql(model, args)
+	whereStrings := createTableWhereSql(list, args, result.GetDBName())
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
 	summedRelationWhereStrings := ""
 	if len(relationWhereStrings) > 0 {
@@ -117,12 +117,12 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders []*Order, paging *Paging) (string, []any, pgx.NamedArgs) {
 	var selectedNames []string
 	var selectedAddress []any
-	selectedNames, selectedAddress = CreateTableNameAndAddresses(result, selectedNames, selectedAddress)
-	selectedNames, selectedAddress = CreateTableRelationsNameAndAddresses(result, selectedNames, selectedAddress)
+	selectedNames, selectedAddress = createTableNameAndAddresses(result, selectedNames, selectedAddress)
+	selectedNames, selectedAddress = createTableRelationsNameAndAddresses(result, selectedNames, selectedAddress)
 
 	args := pgx.NamedArgs{}
-	whereStrings := CreateTableWhereSql(list, args, result.GetDBName())
-	relationSqlString, relationWhereStrings := CreateTableRelationWhereSql(model, args)
+	whereStrings := createTableWhereSql(list, args, result.GetDBName())
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
 	summedRelationWhereStrings := ""
 	if len(relationWhereStrings) > 0 {
@@ -211,7 +211,7 @@ func (receiver *Client) Refresh(ctx context.Context, model Model, result Result,
 	var selectedNames []string
 	var selectedAddresses []any
 
-	selectedNames, selectedAddresses = CreateTableNameAndAddresses(result, selectedNames, selectedAddresses)
+	selectedNames, selectedAddresses = createTableNameAndAddresses(result, selectedNames, selectedAddresses)
 	names := strings.Join(selectedNames, ", ")
 	args := pgx.NamedArgs{
 		"idvalue": idValue,
@@ -237,11 +237,12 @@ func (receiver *Client) Refresh(ctx context.Context, model Model, result Result,
 	return nil
 }
 
-func CreateInsertQuery(fields map[string]any) (string, string, pgx.NamedArgs) {
+func CreateInsertQuery(fields map[string]any, fieldsList []string) (string, string, pgx.NamedArgs) {
 	args := pgx.NamedArgs{}
 	var names []string
 	var values []string
-	for n, v := range fields {
+	for _, n := range fieldsList {
+		v := fields[n]
 		names = append(names, n)
 		values = append(values, "@"+n)
 		args[n] = v
@@ -251,11 +252,11 @@ func CreateInsertQuery(fields map[string]any) (string, string, pgx.NamedArgs) {
 	return nameString, valueString, args
 }
 
-func (receiver *Client) Create(ctx context.Context, tableName string, fields map[string]any, serialFields []*SelectedField) error {
+func (receiver *Client) Create(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, serialFields []*SelectedField) error {
 	receiver.Database.BeginHook()
 	defer receiver.Database.EndHook()
 
-	nameString, valueString, args := CreateInsertQuery(fields)
+	nameString, valueString, args := CreateInsertQuery(fields, fieldsList)
 
 	var serialSql string
 	var serialFieldAddresses []any
@@ -287,21 +288,22 @@ func (receiver *Client) Create(ctx context.Context, tableName string, fields map
 	return nil
 }
 
-func CreateUpdateQuery(fields map[string]any) (string, pgx.NamedArgs) {
+func CreateUpdateQuery(fields map[string]any, fieldsList []string) (string, pgx.NamedArgs) {
 	args := pgx.NamedArgs{}
 	var statements []string
-	for n, v := range fields {
-		args[n] = v
+	for _, n := range fieldsList {
+		v := fields[n]
 		statements = append(statements, fmt.Sprintf("\"%s\" = @%s", n, n))
+		args[n] = v
 	}
-	return strings.Join(statements, ","), args
+	return strings.Join(statements, ", "), args
 }
 
-func (receiver *Client) Update(ctx context.Context, tableName string, fields map[string]any, idName string, idValue any) error {
+func (receiver *Client) Update(ctx context.Context, tableName string, fields map[string]any, fieldslist []string, idName string, idValue any) error {
 	receiver.Database.BeginHook()
 	defer receiver.Database.EndHook()
 
-	statements, args := CreateUpdateQuery(fields)
+	statements, args := CreateUpdateQuery(fields, fieldslist)
 
 	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s = @idvalue", tableName, statements, idName)
 
@@ -395,8 +397,8 @@ func ScanValues(rows pgx.Rows, selectedAddress []any) error {
 
 func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) (string, pgx.NamedArgs) {
 	args := pgx.NamedArgs{}
-	whereStrings := CreateTableWhereSql(list, args, model.GetDBName())
-	relationSqlString, relationWhereStrings := CreateTableRelationWhereSql(model, args)
+	whereStrings := createTableWhereSql(list, args, model.GetDBName())
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
 	summedRelationWhereStrings := ""
 	if len(relationWhereStrings) > 0 {
