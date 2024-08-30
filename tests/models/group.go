@@ -15,6 +15,22 @@ const (
 	GroupSurnameField string = "surname"
 )
 
+var databaseGroupOperationHook = func(operationInfo *client.OperationInfo, model *Group, operationFunc func() error) error {
+	return operationFunc()
+}
+
+var databaseGroupListOperationHook = func(operationInfo *client.OperationInfo, model *GroupList, operationFunc func() error) error {
+	return operationFunc()
+}
+
+func SetDatabaseGroupOperationHook(f func(operationInfo *client.OperationInfo, model *Group, operationFunc func() error) error) {
+	databaseGroupOperationHook = f
+}
+
+func SetDatabaseGroupListOperationHook(f func(operationInfo *client.OperationInfo, model *GroupList, operationFunc func() error) error) {
+	databaseGroupListOperationHook = f
+}
+
 func NewGroup(ctx context.Context, dc client.DatabaseClient) *Group {
 	v := &Group{client: client.NewClient(dc), ctx: ctx}
 	v.relations = new(client.RelationList)
@@ -276,7 +292,6 @@ func (t *Group) WithAccountList(opts ...func(*AccountList)) {
 }
 
 func (t *GroupList) WithAccountList(opts ...func(*AccountList)) {
-	//t.AccountList = NewRelationAccountList(t.ctx, t.client.Database)
 	v := NewRelationAccountList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(v)
@@ -379,28 +394,86 @@ func (t *GroupList) ScanResult() {
 	v.ScanResult()
 }
 
-func (t *Group) Get() (error, bool) {
-	return t.client.Get(t.ctx, t.where, t, &t.result)
+func (t *Group) GetContext() context.Context {
+	return t.ctx
+}
+
+func (t *Group) Get() error {
+	return databaseGroupOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeGet,
+		),
+		t,
+		func() error {
+			return t.client.Get(t.ctx, t.where, t, &t.result)
+		},
+	)
 }
 
 func (t *Group) Refresh() error {
-	return t.client.Refresh(t.ctx, t, &t.result, GroupIDField, t.id)
+	return databaseGroupOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeRefresh,
+		),
+		t,
+		func() error {
+			return t.client.Refresh(t.ctx, t, &t.result, GroupIDField, t.id)
+		},
+	)
 }
 
 func (t *Group) Create() error {
-	return t.client.Create(t.ctx, GroupTableName, t.changedFields, t.changedFieldsList, t.serialFields)
+	return databaseGroupOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeCreate,
+		),
+		t,
+		func() error {
+			return t.client.Create(t.ctx, GroupTableName, t.changedFields, t.changedFieldsList, t.serialFields)
+		},
+	)
 }
 
 func (t *Group) Update() error {
-	return t.client.Update(t.ctx, GroupTableName, t.changedFields, t.changedFieldsList, GroupIDField, t.id)
+	return databaseGroupOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeUpdate,
+		),
+		t,
+		func() error {
+			return t.client.Update(t.ctx, GroupTableName, t.changedFields, t.changedFieldsList, GroupIDField, t.id)
+		},
+	)
 }
 
 func (t *Group) Delete() error {
-	return t.client.Delete(t.ctx, GroupTableName, GroupIDField, t.id)
+	return databaseGroupOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeDelete,
+		),
+		t,
+		func() error {
+			return t.client.Delete(t.ctx, GroupTableName, GroupIDField, t.id)
+		},
+	)
 }
 
-func (t *GroupList) List() (error, bool) {
-	return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
+func (t *GroupList) List() error {
+	return databaseGroupListOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeList,
+		),
+		t,
+		func() error {
+			return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
+		},
+	)
 }
 
 func (t *GroupList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {

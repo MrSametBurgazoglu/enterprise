@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -23,6 +24,8 @@ type DatabaseTransactionClient interface {
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
 }
+
+var NotFoundError = errors.New("not found")
 
 type Client struct {
 	Database DatabaseClient
@@ -153,19 +156,19 @@ func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders
 	return sqlString, selectedAddress, args
 }
 
-func ScanFirstRow(rows pgx.Rows, model Model, selectedAddress []any) (error, bool) {
+func ScanFirstRow(rows pgx.Rows, model Model, selectedAddress []any) error {
 	if err := rows.Err(); err != nil {
-		return err, false
+		return err
 	}
 	if rows.Next() {
 		err := rows.Scan(selectedAddress...)
 		if err != nil {
-			return err, false
+			return err
 		}
 		model.ScanResult()
-		return nil, false
+		return nil
 	} else {
-		return fmt.Errorf("not found"), true
+		return NotFoundError
 	}
 }
 
@@ -180,7 +183,7 @@ func ScanNextRows(rows pgx.Rows, model Model, selectedAddress []any) error {
 	return nil
 }
 
-func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model, result Result) (error, bool) {
+func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model, result Result) error {
 	receiver.Database.BeginHook()
 	defer receiver.Database.EndHook()
 
@@ -188,20 +191,20 @@ func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model,
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
 	if err != nil {
-		return err, false
+		return err
 	}
 
-	err, notFound := ScanFirstRow(rows, model, selectedAddress)
+	err = ScanFirstRow(rows, model, selectedAddress)
 	if err != nil {
-		return err, notFound
+		return err
 	}
 
 	err = ScanNextRows(rows, model, selectedAddress)
 	if err != nil {
-		return err, false
+		return err
 	}
 
-	return nil, true
+	return nil
 }
 
 func (receiver *Client) Refresh(ctx context.Context, model Model, result Result, idName string, idValue any) error {
@@ -229,7 +232,7 @@ func (receiver *Client) Refresh(ctx context.Context, model Model, result Result,
 		return err
 	}
 
-	err, _ = ScanFirstRow(rows, model, selectedAddresses)
+	err = ScanFirstRow(rows, model, selectedAddresses)
 	if err != nil {
 		return err
 	}
@@ -330,19 +333,19 @@ func (receiver *Client) Delete(ctx context.Context, tableName string, idName str
 	return nil
 }
 
-func ScanListFirstRow(rows pgx.Rows, model Model, selectedAddress []any) (error, bool) {
+func ScanListFirstRow(rows pgx.Rows, model Model, selectedAddress []any) error {
 	if err := rows.Err(); err != nil {
-		return err, false
+		return err
 	}
 	if rows.Next() {
 		err := rows.Scan(selectedAddress...)
 		if err != nil {
-			return err, false
+			return err
 		}
 		model.ScanResult()
-		return nil, false
+		return nil
 	} else {
-		return fmt.Errorf("not found"), true
+		return NotFoundError
 	}
 }
 
@@ -359,7 +362,7 @@ func ScanListNextRows(rows pgx.Rows, model Model, selectedAddress []any) error {
 	return nil
 }
 
-func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model, result Result, orders []*Order, paging *Paging) (error, bool) {
+func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model, result Result, orders []*Order, paging *Paging) error {
 	receiver.Database.BeginHook()
 	defer receiver.Database.EndHook()
 
@@ -367,20 +370,20 @@ func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
 	if err != nil {
-		return err, false
+		return err
 	}
 
-	err, notFound := ScanListFirstRow(rows, model, selectedAddress)
+	err = ScanListFirstRow(rows, model, selectedAddress)
 	if err != nil {
-		return err, notFound
+		return err
 	}
 
 	err = ScanListNextRows(rows, model, selectedAddress)
 	if err != nil {
-		return err, false
+		return err
 	}
 
-	return nil, true
+	return nil
 }
 
 func ScanValues(rows pgx.Rows, selectedAddress []any) error {

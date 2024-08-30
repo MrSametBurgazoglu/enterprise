@@ -15,6 +15,23 @@ const (
     {{end}}
 )
 
+var database{{.TableName}}OperationHook = func(operationInfo *client.OperationInfo, model *{{.TableName}}, operationFunc func() error) error {
+    return operationFunc()
+}
+
+var database{{.TableName}}ListOperationHook = func(operationInfo *client.OperationInfo, model *{{.TableName}}List, operationFunc func() error) error {
+    return operationFunc()
+}
+
+func SetDatabase{{.TableName}}OperationHook(f func(operationInfo *client.OperationInfo, model *{{.TableName}}, operationFunc func() error) error){
+    database{{.TableName}}OperationHook = f
+}
+
+func SetDatabase{{.TableName}}ListOperationHook(f func(operationInfo *client.OperationInfo, model *{{.TableName}}List, operationFunc func() error) error){
+    database{{.TableName}}ListOperationHook = f
+}
+
+
 {{range .Fields}}{{if .IsCustomType}}
 type {{.GetName}} string
 {{ $name := .GetName }}
@@ -259,7 +276,6 @@ func (t *{{$.TableName}}) With{{.GetRelationField}}(opts ...func(*{{.GetRelation
 
 {{range .Relations}}
 func (t *{{$.TableName}}List) With{{.GetRelationField}}(opts ...func(*{{.GetRelationField}})){
-    //t.{{.GetRelationField}} = NewRelation{{.GetRelationField}}(t.ctx, t.client.Database)
     v := NewRelation{{.GetRelationField}}(t.ctx, t.client.Database)
     for _, opt := range opts {
         opt(v)
@@ -367,29 +383,86 @@ func (t *{{$.TableName}}List) ScanResult(){
     v.ScanResult()
 }
 
+func (t *{{.TableName}}) GetContext() context.Context{
+    return t.ctx
+}
 
-func (t *{{.TableName}}) Get() (error, bool){
-    return t.client.Get(t.ctx, t.where, t, &t.result)
+func (t *{{.TableName}}) Get() error{
+    return database{{.TableName}}OperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeGet,
+        ),
+        t,
+        func() error {
+            return t.client.Get(t.ctx, t.where, t, &t.result)
+        },
+    )
 }
 
 func (t *{{.TableName}}) Refresh() error{
-    return t.client.Refresh(t.ctx, t, &t.result, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+    return database{{.TableName}}OperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeRefresh,
+        ),
+        t,
+        func() error {
+            return t.client.Refresh(t.ctx, t, &t.result, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+        },
+    )
 }
 
 func (t *{{.TableName}}) Create() error{
-    return t.client.Create(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, t.serialFields)
+    return database{{.TableName}}OperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeCreate,
+        ),
+        t,
+        func() error {
+            return t.client.Create(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, t.serialFields)
+        },
+    )
 }
 
 func (t *{{.TableName}}) Update() error{
-    return t.client.Update(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+    return database{{.TableName}}OperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeUpdate,
+        ),
+        t,
+        func() error {
+            return t.client.Update(t.ctx, {{.TableName}}TableName, t.changedFields, t.changedFieldsList, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+        },
+    )
 }
 
 func (t *{{.TableName}}) Delete() error{
-    return t.client.Delete(t.ctx, {{.TableName}}TableName, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+    return database{{.TableName}}OperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeDelete,
+        ),
+        t,
+        func() error {
+            return t.client.Delete(t.ctx, {{.TableName}}TableName, {{.TableName}}{{.IDField}}Field, t.{{.IDFieldLower}})
+        },
+    )
 }
 
-func (t *{{.TableName}}List) List() (error, bool){
-    return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
+func (t *{{.TableName}}List) List() error{
+    return database{{.TableName}}ListOperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeList,
+        ),
+        t,
+        func() error {
+            return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
+        },
+    )
 }
 
 func (t *{{.TableName}}List) Aggregate(f func (aggregate *client.Aggregate)) (func() error,error){

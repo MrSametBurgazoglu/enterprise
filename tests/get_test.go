@@ -30,7 +30,7 @@ func TestGet(t *testing.T) {
 	mockDB.ExpectQuery(expectedSQLQuery).
 		WithArgs(namedArgs).WillReturnRows(resultRow)
 
-	err, _ := account.Get()
+	err := account.Get()
 
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "name", account.GetName())
@@ -131,7 +131,7 @@ func TestGetWithRelations(t *testing.T) {
 		})
 	})
 
-	err, _ := test.Get()
+	err := test.Get()
 
 	assert.Equal(t, nil, err)
 	assert.Equal(t, testID, test.GetID())

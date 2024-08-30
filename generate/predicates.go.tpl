@@ -3,6 +3,7 @@ package models
 import "github.com/MrSametBurgazoglu/enterprise/client"
 {{range .RequiredPackages}}
 import "{{.}}"{{end}}
+import "strings"
 
 type {{$.TableName}}Predicate struct{
     where []*client.WhereList
@@ -120,3 +121,17 @@ func (t *{{$.TableName}}Predicate) {{.GetName}}LowerEqualThan(v {{.GetBaseType}}
            Value: v,
        }
 }{{end}}{{end}}
+
+func (t *{{$.TableName}}Predicate) GetWhereInfoString() string {
+	var whereString []string
+	for _, list := range t.where {
+        whereAnd := ""
+		var whereAndString []string
+		for _, item := range list.Items {
+			whereAndString = append(whereAndString, item.Name)
+		}
+        whereAnd = strings.Join(whereAndString, "_AND_")
+        whereString = append(whereString, whereAnd)
+	}
+    return strings.Join(whereString, "__OR__")
+}
