@@ -101,17 +101,21 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 	whereStrings := createTableWhereSql(list, args, result.GetDBName())
 	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
-	summedRelationWhereStrings := ""
-	if len(relationWhereStrings) > 0 {
-		summedRelationWhereStrings = fmt.Sprintf(" AND %s", strings.Join(relationWhereStrings, " AND "))
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
 	}
+	if len(relationWhereStrings) > 0 {
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+
+	}
+	summedRelationWhereStrings := strings.Join(allWhereStrings, " AND ")
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM %s %s WHERE (%s %s);",
+	sqlString := fmt.Sprintf("SELECT %s FROM %s %s WHERE (%s);",
 		names,
 		model.GetDBName(),
 		relationSqlString,
-		mainTableWhereString,
 		summedRelationWhereStrings)
 
 	return sqlString, selectedAddress, args

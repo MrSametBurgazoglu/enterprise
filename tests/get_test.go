@@ -13,7 +13,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id) );"
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id));"
 	id := uuid.New()
 	ctx := context.TODO()
 	var serial uint = 5
@@ -62,8 +62,7 @@ func TestGetWithRelations(t *testing.T) {
 	    LEFT JOIN "deneme" ON "test"."id" = "deneme"."test_id"
 		LEFT JOIN "account" ON "deneme"."id" = "account"."deneme_id"
 		LEFT JOIN "group" ON "account"."group_id" = "group"."account_id"
-	WHERE ( 
-		AND ("deneme"."count" = @deneme__count)
+	WHERE (("deneme"."count" = @deneme__count)
 		AND ("account"."name" = @account__name) 
 		AND ("group"."name" = @group__name));`
 

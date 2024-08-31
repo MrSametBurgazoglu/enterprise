@@ -13,7 +13,7 @@ import (
 )
 
 func TestHook(t *testing.T) {
-	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id) );"
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id));"
 	id := uuid.New()
 	ctx := context.TODO()
 	var serial uint = 5
