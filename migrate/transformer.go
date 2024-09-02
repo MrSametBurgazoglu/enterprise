@@ -9,9 +9,35 @@ import (
 
 func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *schema.Schema {
 	dbSchema := &schema.Schema{Name: schemaName}
+	tableMap := make(map[string]*schema.Table)
 	for _, table := range tables {
-		dbSchema.Tables = append(dbSchema.Tables, TransformTableToAtlasTable(table))
+		t := TransformTableToAtlasTable(table)
+		dbSchema.Tables = append(dbSchema.Tables, t)
+		tableMap[t.Name] = t
 	}
+
+	for i, table := range tables {
+		for _, relation := range table.Relations {
+			symbol := fmt.Sprintf("%s_%s", table.DBName, relation.OnField)
+
+			if relation.RelationType == 1 { //many to one
+				continue
+			}
+			println("symbol", symbol)
+			println("on", relation.OnField, "relation", relation.RelationField)
+			println(relation.RelationType)
+
+			fk := schema.NewForeignKey(symbol).
+				SetTable(tableMap[table.DBName]).
+				SetRefTable(tableMap[relation.RelationTableDBName]).
+				SetOnUpdate(schema.NoAction).
+				SetOnDelete(schema.NoAction).
+				AddColumns(&schema.Column{Name: relation.OnField}).
+				AddRefColumns(&schema.Column{Name: relation.RelationField})
+			dbSchema.Tables[i].AddForeignKeys(fk)
+		}
+	}
+
 	manyToManyTables := make(map[string]bool)
 	for _, table := range tables {
 		for _, relation := range table.Relations {
@@ -21,17 +47,49 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 					continue
 				}
 				manyToManyTables[relation.ManyTableDBName] = true
+
+				primaryKey := schema.NewIntColumn("id", postgres.TypeSmallSerial)
+
 				relationTable := &schema.Table{
 					Name: relation.ManyTableDBName,
 					PrimaryKey: &schema.Index{
-						Parts: []*schema.IndexPart{{C: &schema.Column{Name: "id"}}},
+						Parts: []*schema.IndexPart{{C: primaryKey}},
 					},
 				}
+
+				pk := schema.NewPrimaryKey(primaryKey)
+				relationTable.SetPrimaryKey(pk)
+
+				c1 := &schema.Column{Name: fmt.Sprintf("%s_id", table.DBName), Type: &schema.ColumnType{Type: &postgres.UUIDType{T: postgres.TypeUUID}}}
+				c2 := &schema.Column{Name: fmt.Sprintf("%s_id", relation.RelationTableDBName), Type: &schema.ColumnType{Type: &postgres.UUIDType{T: postgres.TypeUUID}}}
+
 				relationTable.Columns = []*schema.Column{
-					schema.NewIntColumn("id", postgres.TypeSmallSerial),
-					{Name: fmt.Sprintf("%s_id", table.DBName), Type: &schema.ColumnType{Type: &postgres.UUIDType{T: postgres.TypeUUID}}},
-					{Name: fmt.Sprintf("%s_id", relation.RelationTableDBName), Type: &schema.ColumnType{Type: &postgres.UUIDType{T: postgres.TypeUUID}}},
+					primaryKey,
+					c1,
+					c2,
 				}
+
+				symbol1 := fmt.Sprintf("%s_%s", relation.ManyTableDBName, table.DBName)
+				symbol2 := fmt.Sprintf("%s_%s", relation.ManyTableDBName, relation.RelationTableDBName)
+
+				fk1 := schema.NewForeignKey(symbol1).
+					SetTable(relationTable).
+					SetRefTable(tableMap[table.DBName]).
+					SetOnUpdate(schema.NoAction).
+					SetOnDelete(schema.NoAction).
+					AddColumns(c1).
+					AddRefColumns(&schema.Column{Name: relation.RelationField})
+				relationTable.AddForeignKeys(fk1)
+
+				fk2 := schema.NewForeignKey(symbol2).
+					SetTable(relationTable).
+					SetRefTable(tableMap[relation.RelationTableDBName]).
+					SetOnUpdate(schema.NoAction).
+					SetOnDelete(schema.NoAction).
+					AddColumns(c2).
+					AddRefColumns(&schema.Column{Name: relation.OnField})
+				relationTable.AddForeignKeys(fk2)
+
 				dbSchema.Tables = append(dbSchema.Tables, relationTable)
 			}
 		}
@@ -41,12 +99,13 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 }
 
 func TransformTableToAtlasTable(table *models.Table) *schema.Table {
-	dbTable := &schema.Table{
-		Name: table.DBName,
-		PrimaryKey: &schema.Index{
-			Parts: []*schema.IndexPart{{C: &schema.Column{Name: table.IDDBField}}},
-		},
-	}
+	primaryKey := TransformFieldToAtlasColumn(table.IDColumn)
+
+	dbTable := &schema.Table{Name: table.DBName}
+
+	pk := schema.NewPrimaryKey(primaryKey)
+	dbTable.SetPrimaryKey(pk)
+
 	for _, field := range table.Fields {
 		dbTable.Columns = append(dbTable.Columns, TransformFieldToAtlasColumn(field))
 	}

@@ -79,6 +79,7 @@ type Table struct {
 	IDFieldType      string
 	Fields           []FieldI
 	Relations        []*Relation
+	IDColumn         FieldI
 	RequiredPackages []string
 }
 
@@ -92,6 +93,7 @@ func (t *Table) SetIDField(field FieldI) {
 	t.IDDBField = field.GetDBName()
 	t.IDFieldType = field.GetType()
 	t.DBName = ConvertToSnakeCase(t.TableName)
+	t.IDColumn = field
 }
 
 func (t *Table) IDFieldLower() string {

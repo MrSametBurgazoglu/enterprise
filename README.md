@@ -32,7 +32,7 @@ V0.1.0-alpha
 
 - [x] Add simple unit tests
 - [x] Hook system functions to every model db operation.
-- [ ] Pk and fk on migration table
+- [x] Pk and fk on migration table
 
 V0.1.0
 - [ ] Add bulks(Insert, Update, Delete)
