@@ -46,7 +46,6 @@ func NewDeneme(ctx context.Context, dc client.DatabaseClient) *Deneme {
 	v.relations.RelationMap = make(map[string]*client.Relation)
 	v.changedFields = make(map[string]any)
 	v.result.Init()
-	v.Default()
 	return v
 }
 
@@ -501,7 +500,7 @@ func (t *DenemeList) cleanAccountList() {
 	Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }
 
-func (t *Deneme) Default() {
+func (t *Deneme) SetDefaults() {
 	t.id = uuid.New()
 	t.changedFields[DenemeIDField] = t.id
 	t.changedFieldsList = append(t.changedFieldsList, DenemeIDField)
@@ -665,6 +664,59 @@ func (t *DenemeList) Aggregate(f func(aggregate *client.Aggregate)) (func() erro
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *DenemeList) Create(list ...*Deneme) error {
+	return databaseDenemeListOperationHook(
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkCreate,
+		),
+		t,
+		func() error {
+			var changedFieldsList []map[string]any
+			var changedFieldsListList [][]string
+			for _, item := range list {
+				changedFieldsList = append(changedFieldsList, item.changedFields)
+				changedFieldsListList = append(changedFieldsListList, item.changedFieldsList)
+			}
+			return t.client.BulkCreate(t.ctx, DenemeTableName, changedFieldsList, changedFieldsListList)
+		},
+	)
+}
+
+func (t *DenemeList) Update(list ...*Deneme) error {
+	return databaseDenemeListOperationHook(
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkUpdate(t.ctx, DenemeTableName, list[0].changedFields, list[0].changedFieldsList, DenemeIDField, valueList)
+		},
+	)
+}
+
+func (t *DenemeList) Delete(list ...*Deneme) error {
+	return databaseDenemeListOperationHook(
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkDelete(t.ctx, DenemeTableName, DenemeIDField, valueList)
+		},
+	)
 }
 
 func (t *DenemeList) Order(field string) *DenemeList {

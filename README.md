@@ -35,7 +35,7 @@ V0.1.0-alpha
 - [x] Pk and fk on migration table
 
 V0.1.0
-- [ ] Add bulks(Insert, Update, Delete)
+- [x] Add bulk Insert
 
 V0.2.0
 - [ ] Choose Join Type

@@ -39,7 +39,6 @@ func NewAccount(ctx context.Context, dc client.DatabaseClient) *Account {
 	v.relations.RelationMap = make(map[string]*client.Relation)
 	v.changedFields = make(map[string]any)
 	v.result.Init()
-	v.Default()
 	return v
 }
 
@@ -495,7 +494,7 @@ func (t *AccountList) cleanGroupList() {
 	Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }
 
-func (t *Account) Default() {
+func (t *Account) SetDefaults() {
 	t.id = uuid.New()
 	t.changedFields[AccountIDField] = t.id
 	t.changedFieldsList = append(t.changedFieldsList, AccountIDField)
@@ -658,6 +657,59 @@ func (t *AccountList) Aggregate(f func(aggregate *client.Aggregate)) (func() err
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *AccountList) Create(list ...*Account) error {
+	return databaseAccountListOperationHook(
+		client.NewOperationInfo(
+			AccountTableName,
+			client.OperationTypeBulkCreate,
+		),
+		t,
+		func() error {
+			var changedFieldsList []map[string]any
+			var changedFieldsListList [][]string
+			for _, item := range list {
+				changedFieldsList = append(changedFieldsList, item.changedFields)
+				changedFieldsListList = append(changedFieldsListList, item.changedFieldsList)
+			}
+			return t.client.BulkCreate(t.ctx, AccountTableName, changedFieldsList, changedFieldsListList)
+		},
+	)
+}
+
+func (t *AccountList) Update(list ...*Account) error {
+	return databaseAccountListOperationHook(
+		client.NewOperationInfo(
+			AccountTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkUpdate(t.ctx, AccountTableName, list[0].changedFields, list[0].changedFieldsList, AccountIDField, valueList)
+		},
+	)
+}
+
+func (t *AccountList) Delete(list ...*Account) error {
+	return databaseAccountListOperationHook(
+		client.NewOperationInfo(
+			AccountTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkDelete(t.ctx, AccountTableName, AccountIDField, valueList)
+		},
+	)
 }
 
 func (t *AccountList) Order(field string) *AccountList {

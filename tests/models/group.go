@@ -37,7 +37,6 @@ func NewGroup(ctx context.Context, dc client.DatabaseClient) *Group {
 	v.relations.RelationMap = make(map[string]*client.Relation)
 	v.changedFields = make(map[string]any)
 	v.result.Init()
-	v.Default()
 	return v
 }
 
@@ -330,7 +329,7 @@ func (t *GroupList) cleanAccountList() {
 	Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }
 
-func (t *Group) Default() {
+func (t *Group) SetDefaults() {
 	t.id = uuid.New()
 	t.changedFields[GroupIDField] = t.id
 	t.changedFieldsList = append(t.changedFieldsList, GroupIDField)
@@ -480,6 +479,59 @@ func (t *GroupList) Aggregate(f func(aggregate *client.Aggregate)) (func() error
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *GroupList) Create(list ...*Group) error {
+	return databaseGroupListOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkCreate,
+		),
+		t,
+		func() error {
+			var changedFieldsList []map[string]any
+			var changedFieldsListList [][]string
+			for _, item := range list {
+				changedFieldsList = append(changedFieldsList, item.changedFields)
+				changedFieldsListList = append(changedFieldsListList, item.changedFieldsList)
+			}
+			return t.client.BulkCreate(t.ctx, GroupTableName, changedFieldsList, changedFieldsListList)
+		},
+	)
+}
+
+func (t *GroupList) Update(list ...*Group) error {
+	return databaseGroupListOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkUpdate(t.ctx, GroupTableName, list[0].changedFields, list[0].changedFieldsList, GroupIDField, valueList)
+		},
+	)
+}
+
+func (t *GroupList) Delete(list ...*Group) error {
+	return databaseGroupListOperationHook(
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkDelete(t.ctx, GroupTableName, GroupIDField, valueList)
+		},
+	)
 }
 
 func (t *GroupList) Order(field string) *GroupList {

@@ -17,6 +17,7 @@ func TestCreate(t *testing.T) {
 	defer mockDB.Close()
 
 	account := models.NewAccount(ctx, mockDB)
+	account.SetDefaults()
 	account.SetName("name")
 	account.SetSurname("surname")
 	var serial uint = 1

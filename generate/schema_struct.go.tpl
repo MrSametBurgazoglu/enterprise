@@ -46,7 +46,6 @@ func New{{.TableName}}(ctx context.Context, dc client.DatabaseClient) *{{.TableN
     v.relations.RelationMap = make(map[string]*client.Relation)
     v.changedFields = make(map[string]any)
     v.result.Init()
-    v.Default()
     return v
 }
 
@@ -314,7 +313,7 @@ func (t *{{$.TableName}}List) clean{{.GetRelationField}}(){
     Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }{{end}}
 
-func (t *{{$.TableName}}) Default(){
+func (t *{{$.TableName}}) SetDefaults(){
     {{range .Fields}}{{if .IsDefault}}t.{{.GetNameLower}} = {{.GetDefault}}
     t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
     t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}{{.GetName}}Field){{end}}
@@ -470,6 +469,60 @@ func (t *{{.TableName}}List) Aggregate(f func (aggregate *client.Aggregate)) (fu
     f(a)
     return t.client.Aggregate(t.ctx, t.where, t, a)
 }
+
+func (t *{{.TableName}}List) Create(list ...*{{.TableName}}) error{
+    return database{{.TableName}}ListOperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeBulkCreate,
+        ),
+        t,
+        func() error {
+            var changedFieldsList []map[string]any
+            var changedFieldsListList [][]string
+            for _, item := range list{
+                changedFieldsList = append(changedFieldsList, item.changedFields)
+                changedFieldsListList = append(changedFieldsListList, item.changedFieldsList)
+            }
+            return t.client.BulkCreate(t.ctx, {{.TableName}}TableName, changedFieldsList, changedFieldsListList)
+        },
+    )
+}
+
+func (t *{{.TableName}}List) Update(list ...*{{.TableName}}) error{
+    return database{{.TableName}}ListOperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeBulkUpdate,
+        ),
+        t,
+        func() error {
+            var valueList []any
+            for _, item := range list{
+                valueList = append(valueList, item.{{.IDFieldLower}})
+            }
+            return t.client.BulkUpdate(t.ctx, {{.TableName}}TableName, list[0].changedFields, list[0].changedFieldsList, {{.TableName}}{{.IDField}}Field, valueList)
+        },
+    )
+}
+
+func (t *{{.TableName}}List) Delete(list ...*{{.TableName}}) error{
+    return database{{.TableName}}ListOperationHook(
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeBulkDelete,
+        ),
+        t,
+        func() error {
+            var valueList []any
+            for _, item := range list{
+                valueList = append(valueList, item.{{.IDFieldLower}})
+            }
+            return t.client.BulkDelete(t.ctx, {{.TableName}}TableName, {{.TableName}}{{.IDField}}Field, valueList)
+        },
+    )
+}
+
 
 func (t *{{.TableName}}List) Order(field string) *{{.TableName}}List{
     t.order = append(t.order, &client.Order{Field:field})

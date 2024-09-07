@@ -524,3 +524,78 @@ func (receiver *Client) ExistManyToManyRelation(ctx context.Context, relationshi
 	}
 	return false, nil
 }
+
+func CreateBulkInsertQuery(args pgx.NamedArgs, fieldsList []map[string]any, fieldsListList [][]string) (string, string) {
+	var names []string
+	var values [][]string
+	for _, n := range fieldsListList[0] {
+		names = append(names, n)
+	}
+
+	for i, fieldListItem := range fieldsListList {
+		var currentValues []string
+		for _, n := range fieldListItem {
+			v := fieldsList[i][n]
+			valueName := fmt.Sprintf("%d%s", i, n)
+			currentValues = append(currentValues, fmt.Sprintf("@%s", valueName))
+			args[valueName] = v
+		}
+		values = append(values, currentValues)
+	}
+
+	nameString := fmt.Sprintf("(%s)", strings.Join(names, ","))
+	var valueString []string
+	for _, value := range values {
+		valueString = append(valueString, fmt.Sprintf("(%s)", strings.Join(value, ",")))
+	}
+	valuesString := strings.Join(valueString, ", ")
+	return nameString, valuesString
+}
+
+func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fieldsList []map[string]any, fieldsListList [][]string) error {
+	receiver.Database.BeginHook()
+	defer receiver.Database.EndHook()
+
+	args := pgx.NamedArgs{}
+
+	nameString, valueString := CreateBulkInsertQuery(args, fieldsList, fieldsListList)
+
+	sqlString := fmt.Sprintf("INSERT INTO \"%s\" %s VALUES %s;", tableName, nameString, valueString)
+
+	_, err := receiver.Database.Exec(ctx, sqlString, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, idName string, idValue []any) error {
+	receiver.Database.BeginHook()
+	defer receiver.Database.EndHook()
+
+	statements, args := CreateUpdateQuery(fields, fieldsList)
+
+	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s IN (@idvalue)", tableName, statements, idName)
+
+	args["idvalue"] = idValue
+	_, err := receiver.Database.Exec(ctx, sqlString, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (receiver *Client) BulkDelete(ctx context.Context, tableName string, idName string, idValue []any) error {
+	receiver.Database.BeginHook()
+	defer receiver.Database.EndHook()
+
+	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE %s IN (@idvalue);", tableName, idName)
+
+	args := pgx.NamedArgs{}
+	args["idvalue"] = idValue
+	_, err := receiver.Database.Exec(ctx, sqlString, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}

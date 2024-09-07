@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-	expectedSQLQuery := "UPDATE \"account\" SET \"id\" = @id,  \"name\" = @name, \"surname\" = @surname WHERE id = @idvalue"
+	expectedSQLQuery := "UPDATE \"account\" SET \"name\" = @name, \"surname\" = @surname WHERE id = @idvalue"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()
@@ -20,7 +20,7 @@ func TestUpdate(t *testing.T) {
 	account.SetName("name")
 	account.SetSurname("surname")
 
-	namedArgs := pgx.NamedArgs{"id": account.GetID(), "name": account.GetName(), "surname": account.GetSurname(), "idvalue": account.GetID()}
+	namedArgs := pgx.NamedArgs{"name": account.GetName(), "surname": account.GetSurname(), "idvalue": account.GetID()}
 	mockDB.ExpectExec(expectedSQLQuery).
 		WithArgs(namedArgs).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 

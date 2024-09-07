@@ -38,7 +38,6 @@ func NewTest(ctx context.Context, dc client.DatabaseClient) *Test {
 	v.relations.RelationMap = make(map[string]*client.Relation)
 	v.changedFields = make(map[string]any)
 	v.result.Init()
-	v.Default()
 	return v
 }
 
@@ -345,7 +344,7 @@ func (t *TestList) cleanDenemeList() {
 	Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }
 
-func (t *Test) Default() {
+func (t *Test) SetDefaults() {
 	t.id = uuid.New()
 	t.changedFields[TestIDField] = t.id
 	t.changedFieldsList = append(t.changedFieldsList, TestIDField)
@@ -495,6 +494,59 @@ func (t *TestList) Aggregate(f func(aggregate *client.Aggregate)) (func() error,
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *TestList) Create(list ...*Test) error {
+	return databaseTestListOperationHook(
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkCreate,
+		),
+		t,
+		func() error {
+			var changedFieldsList []map[string]any
+			var changedFieldsListList [][]string
+			for _, item := range list {
+				changedFieldsList = append(changedFieldsList, item.changedFields)
+				changedFieldsListList = append(changedFieldsListList, item.changedFieldsList)
+			}
+			return t.client.BulkCreate(t.ctx, TestTableName, changedFieldsList, changedFieldsListList)
+		},
+	)
+}
+
+func (t *TestList) Update(list ...*Test) error {
+	return databaseTestListOperationHook(
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkUpdate(t.ctx, TestTableName, list[0].changedFields, list[0].changedFieldsList, TestIDField, valueList)
+		},
+	)
+}
+
+func (t *TestList) Delete(list ...*Test) error {
+	return databaseTestListOperationHook(
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var valueList []any
+			for _, item := range list {
+				valueList = append(valueList, item.id)
+			}
+			return t.client.BulkDelete(t.ctx, TestTableName, TestIDField, valueList)
+		},
+	)
 }
 
 func (t *TestList) Order(field string) *TestList {
