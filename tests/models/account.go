@@ -359,7 +359,7 @@ func (t *Account) SetSerialField() {
 
 }
 
-func (t *Account) WithDeneme(opts ...func(*Deneme)) {
+func (t *Account) WithDeneme(opts ...func(*Deneme)) *client.Relation {
 	t.Deneme = NewRelationDeneme(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(t.Deneme)
@@ -372,22 +372,22 @@ func (t *Account) WithDeneme(opts ...func(*Deneme)) {
 		t.result.Deneme.relations = append(t.result.Deneme.relations, Relation.RelationResult)
 		t.result.Deneme.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  t.Deneme,
-			RelationTable:  "deneme",
-			RelationResult: t.result.Deneme,
-			Where:          t.Deneme.where,
+	r := &client.Relation{
+		RelationModel:  t.Deneme,
+		RelationTable:  "deneme",
+		RelationResult: t.result.Deneme,
+		Where:          t.Deneme.where,
 
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "id",
-				TableValue:    "deneme_id",
-			},
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "id",
+			TableValue:    "deneme_id",
 		},
-	)
-	t.relations.RelationMap["deneme"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["deneme"] = r
+	return r
 }
-func (t *Account) WithGroupList(opts ...func(*GroupList)) {
+func (t *Account) WithGroupList(opts ...func(*GroupList)) *client.Relation {
 	t.GroupList = NewRelationGroupList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(t.GroupList)
@@ -400,24 +400,24 @@ func (t *Account) WithGroupList(opts ...func(*GroupList)) {
 		t.result.Group.relations = append(t.result.Group.relations, Relation.RelationResult)
 		t.result.Group.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:   t.GroupList,
-			RelationTable:   "group",
-			RelationResult:  t.result.Group,
-			Where:           t.GroupList.where,
-			ManyToManyTable: "account_group",
-			RelationWhere: &client.RelationCondition{
-				RelationValue:      "account_id",
-				TableValue:         "group_id",
-				RelationTableValue: "id",
-			},
+	r := &client.Relation{
+		RelationModel:   t.GroupList,
+		RelationTable:   "group",
+		RelationResult:  t.result.Group,
+		Where:           t.GroupList.where,
+		ManyToManyTable: "account_group",
+		RelationWhere: &client.RelationCondition{
+			RelationValue:      "account_id",
+			TableValue:         "group_id",
+			RelationTableValue: "id",
 		},
-	)
-	t.relations.RelationMap["group"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["group"] = r
+	return r
 }
 
-func (t *AccountList) WithDeneme(opts ...func(*Deneme)) {
+func (t *AccountList) WithDeneme(opts ...func(*Deneme)) *client.Relation {
 	v := NewRelationDeneme(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(v)
@@ -430,19 +430,19 @@ func (t *AccountList) WithDeneme(opts ...func(*Deneme)) {
 		t.result.Deneme.relations = append(t.result.Deneme.relations, Relation.RelationResult)
 		t.result.Deneme.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  v,
-			RelationTable:  "deneme",
-			RelationResult: t.result.Deneme,
-			Where:          v.where,
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "id",
-				TableValue:    "deneme_id",
-			},
+	r := &client.Relation{
+		RelationModel:  v,
+		RelationTable:  "deneme",
+		RelationResult: t.result.Deneme,
+		Where:          v.where,
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "id",
+			TableValue:    "deneme_id",
 		},
-	)
-	t.relations.RelationMap["deneme"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["deneme"] = r
+	return r
 }
 
 func (t *AccountList) cleanDeneme() {
@@ -455,7 +455,7 @@ func (t *AccountList) cleanDeneme() {
 	}
 	Relation.Relations = append(Relation.Relations[:p], Relation.Relations[p+1:]...)
 }
-func (t *AccountList) WithGroupList(opts ...func(*GroupList)) {
+func (t *AccountList) WithGroupList(opts ...func(*GroupList)) *client.Relation {
 	v := NewRelationGroupList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(v)
@@ -468,19 +468,19 @@ func (t *AccountList) WithGroupList(opts ...func(*GroupList)) {
 		t.result.Group.relations = append(t.result.Group.relations, Relation.RelationResult)
 		t.result.Group.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  v,
-			RelationTable:  "group",
-			RelationResult: t.result.Group,
-			Where:          v.where,
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "account_id",
-				TableValue:    "group_id",
-			},
+	r := &client.Relation{
+		RelationModel:  v,
+		RelationTable:  "group",
+		RelationResult: t.result.Group,
+		Where:          v.where,
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "account_id",
+			TableValue:    "group_id",
 		},
-	)
-	t.relations.RelationMap["group"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["group"] = r
+	return r
 }
 
 func (t *AccountList) cleanGroupList() {

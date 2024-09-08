@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+type RelationJoinType string
+
+const (
+	RelationJoinTypeDefault RelationJoinType = ""
+	RelationJoinTypeLeft    RelationJoinType = "LEFT"
+	RelationJoinTypeRight   RelationJoinType = "RIGHT"
+	RelationJoinTypeFull    RelationJoinType = "FULL"
+	RelationJoinTypeInner   RelationJoinType = "INNER"
+)
+
 type RelationModel interface {
 	GetDBName() string
 	IsExist() bool
@@ -21,18 +31,32 @@ func (r *RelationCondition) String(tableName, relationTableName string) string {
 }
 
 type Relation struct {
-	RelationModel   Model
-	RelationResult  Result
-	RelationTable   string
-	RelationWhere   *RelationCondition
-	Where           []*WhereList
-	ManyToManyTable string
+	RelationModel    Model
+	RelationResult   Result
+	RelationTable    string
+	RelationWhere    *RelationCondition
+	RelationJoinType RelationJoinType
+	Where            []*WhereList
+	ManyToManyTable  string
 }
 
-func (r *Relation) GetJoinString(tableName string) string {
+func (r *Relation) SetJoinType(t RelationJoinType) *Relation {
+	r.RelationJoinType = t
+	return r
+}
+
+func (r *Relation) getJoinType() string {
+	if r.RelationJoinType == RelationJoinTypeDefault {
+		return string(RelationJoinTypeLeft)
+	}
+	return string(r.RelationJoinType)
+}
+
+func (r *Relation) getJoinString(tableName string) string {
 	if r.ManyToManyTable != "" {
 		return fmt.Sprintf(
-			"LEFT JOIN \"%s\" ON \"%s\".\"%s\" = \"%s\".\"%s\" LEFT JOIN \"%s\" ON \"%s\".\"%s\" = \"%s\".\"%s\" ",
+			"%s JOIN \"%s\" ON \"%s\".\"%s\" = \"%s\".\"%s\" LEFT JOIN \"%s\" ON \"%s\".\"%s\" = \"%s\".\"%s\" ",
+			r.getJoinType(),
 			r.ManyToManyTable,
 			tableName,
 			r.RelationWhere.RelationTableValue, //todo get two tables primary key name
@@ -45,14 +69,14 @@ func (r *Relation) GetJoinString(tableName string) string {
 			r.RelationWhere.TableValue,
 		)
 	}
-	return fmt.Sprintf("LEFT JOIN \"%s\" ON %s", r.RelationTable, r.RelationWhere.String(tableName, r.RelationTable))
+	return fmt.Sprintf("%s JOIN \"%s\" ON %s", r.getJoinType(), r.RelationTable, r.RelationWhere.String(tableName, r.RelationTable))
 }
 
-func (r *Relation) IsRelationHaveWhereClause() bool {
+func (r *Relation) isRelationHaveWhereClause() bool {
 	return len(r.Where) != 0
 }
 
-func (r *Relation) ParseWhere() *Res {
+func (r *Relation) parseWhere() *Res {
 	res := new(Res)
 	var whereStrings []string
 	for _, list := range r.Where {

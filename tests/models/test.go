@@ -276,7 +276,7 @@ func (t *Test) SetCreatedAtField() {
 
 }
 
-func (t *Test) WithDenemeList(opts ...func(*DenemeList)) {
+func (t *Test) WithDenemeList(opts ...func(*DenemeList)) *client.Relation {
 	t.DenemeList = NewRelationDenemeList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(t.DenemeList)
@@ -289,23 +289,23 @@ func (t *Test) WithDenemeList(opts ...func(*DenemeList)) {
 		t.result.Deneme.relations = append(t.result.Deneme.relations, Relation.RelationResult)
 		t.result.Deneme.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  t.DenemeList,
-			RelationTable:  "deneme",
-			RelationResult: t.result.Deneme,
-			Where:          t.DenemeList.where,
+	r := &client.Relation{
+		RelationModel:  t.DenemeList,
+		RelationTable:  "deneme",
+		RelationResult: t.result.Deneme,
+		Where:          t.DenemeList.where,
 
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "test_id",
-				TableValue:    "id",
-			},
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "test_id",
+			TableValue:    "id",
 		},
-	)
-	t.relations.RelationMap["deneme"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["deneme"] = r
+	return r
 }
 
-func (t *TestList) WithDenemeList(opts ...func(*DenemeList)) {
+func (t *TestList) WithDenemeList(opts ...func(*DenemeList)) *client.Relation {
 	v := NewRelationDenemeList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(v)
@@ -318,19 +318,19 @@ func (t *TestList) WithDenemeList(opts ...func(*DenemeList)) {
 		t.result.Deneme.relations = append(t.result.Deneme.relations, Relation.RelationResult)
 		t.result.Deneme.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  v,
-			RelationTable:  "deneme",
-			RelationResult: t.result.Deneme,
-			Where:          v.where,
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "test_id",
-				TableValue:    "id",
-			},
+	r := &client.Relation{
+		RelationModel:  v,
+		RelationTable:  "deneme",
+		RelationResult: t.result.Deneme,
+		Where:          v.where,
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "test_id",
+			TableValue:    "id",
 		},
-	)
-	t.relations.RelationMap["deneme"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["deneme"] = r
+	return r
 }
 
 func (t *TestList) cleanDenemeList() {

@@ -38,7 +38,7 @@ V0.1.0
 - [x] Add bulk Insert
 
 V0.2.0
-- [ ] Choose Join Type
+- [x] Choose Join Type
 
 V0.3.0
 - [ ] Json field

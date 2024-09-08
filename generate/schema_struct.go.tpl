@@ -243,7 +243,7 @@ func (t *{{$.TableName}}) Set{{.GetName}}Field(){
 }{{end}}
 
 {{range .Relations}}
-func (t *{{$.TableName}}) With{{.GetRelationField}}(opts ...func(*{{.GetRelationField}})){
+func (t *{{$.TableName}}) With{{.GetRelationField}}(opts ...func(*{{.GetRelationField}})) *client.Relation{
     t.{{.GetRelationField}} = NewRelation{{.GetRelationField}}(t.ctx, t.client.Database)
     for _, opt := range opts {
         opt(t.{{.GetRelationField}})
@@ -256,25 +256,25 @@ func (t *{{$.TableName}}) With{{.GetRelationField}}(opts ...func(*{{.GetRelation
         t.result.{{.RelationTable}}.relations = append(t.result.{{.RelationTable}}.relations, Relation.RelationResult)
         t.result.{{.RelationTable}}.relationsMap[Relation.RelationTable] = Relation.RelationResult
     }
-    t.relations.Relations = append(t.relations.Relations,
-    	&client.Relation{
-    	    RelationModel: t.{{.GetRelationField}},
-    	    RelationTable: "{{.RelationTableDBName}}",
-    	    RelationResult: t.result.{{.RelationTable}},
-    	    Where: t.{{.GetRelationField}}.where,
-    	    {{if .IsManyToMany}}ManyToManyTable: "{{.ManyTableDBName}}",{{end}}
-    	    RelationWhere: &client.RelationCondition{
-    	        RelationValue: "{{.RelationField}}",
-    	        TableValue: "{{.OnField}}",
-    	        {{if .IsManyToMany}}RelationTableValue: "{{.RelationTableField}}",{{end}}
-    	    },
-    	},
-    )
-    t.relations.RelationMap["{{.GetRelationTableLower}}"] = t.relations.Relations[len(t.relations.Relations)-1]
+    r := &client.Relation{
+        RelationModel: t.{{.GetRelationField}},
+        RelationTable: "{{.RelationTableDBName}}",
+        RelationResult: t.result.{{.RelationTable}},
+        Where: t.{{.GetRelationField}}.where,
+        {{if .IsManyToMany}}ManyToManyTable: "{{.ManyTableDBName}}",{{end}}
+        RelationWhere: &client.RelationCondition{
+            RelationValue: "{{.RelationField}}",
+            TableValue: "{{.OnField}}",
+            {{if .IsManyToMany}}RelationTableValue: "{{.RelationTableField}}",{{end}}
+        },
+    }
+    t.relations.Relations = append(t.relations.Relations, r)
+    t.relations.RelationMap["{{.GetRelationTableLower}}"] = r
+    return r
 }{{end}}
 
 {{range .Relations}}
-func (t *{{$.TableName}}List) With{{.GetRelationField}}(opts ...func(*{{.GetRelationField}})){
+func (t *{{$.TableName}}List) With{{.GetRelationField}}(opts ...func(*{{.GetRelationField}})) *client.Relation{
     v := NewRelation{{.GetRelationField}}(t.ctx, t.client.Database)
     for _, opt := range opts {
         opt(v)
@@ -287,19 +287,19 @@ func (t *{{$.TableName}}List) With{{.GetRelationField}}(opts ...func(*{{.GetRela
     	t.result.{{.RelationTable}}.relations = append(t.result.{{.RelationTable}}.relations, Relation.RelationResult)
     	t.result.{{.RelationTable}}.relationsMap[Relation.RelationTable] = Relation.RelationResult
     }
-    t.relations.Relations = append(t.relations.Relations,
-    	&client.Relation{
-    	    RelationModel: v,
-    	    RelationTable: "{{.RelationTableDBName}}",
-    	    RelationResult: t.result.{{.RelationTable}},
-    	    Where: v.where,
-    	    RelationWhere: &client.RelationCondition{
-    	        RelationValue: "{{.RelationField}}",
-    	        TableValue: "{{.OnField}}",
-    	    },
-    	},
-    )
-    t.relations.RelationMap["{{.GetRelationTableLower}}"] = t.relations.Relations[len(t.relations.Relations)-1]
+    r := &client.Relation{
+        RelationModel: v,
+        RelationTable: "{{.RelationTableDBName}}",
+        RelationResult: t.result.{{.RelationTable}},
+        Where: v.where,
+        RelationWhere: &client.RelationCondition{
+            RelationValue: "{{.RelationField}}",
+            TableValue: "{{.OnField}}",
+        },
+    }
+    t.relations.Relations = append(t.relations.Relations, r)
+    t.relations.RelationMap["{{.GetRelationTableLower}}"] = r
+    return r
 }
 
 func (t *{{$.TableName}}List) clean{{.GetRelationField}}(){

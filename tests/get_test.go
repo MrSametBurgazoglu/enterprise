@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"github.com/MrSametBurgazoglu/enterprise/client"
 	"github.com/MrSametBurgazoglu/enterprise/mock"
 	"github.com/MrSametBurgazoglu/enterprise/tests/models"
 	"github.com/google/uuid"
@@ -60,7 +61,7 @@ func TestGetWithRelations(t *testing.T) {
     "group"."surname"
 	FROM test
 	    LEFT JOIN "deneme" ON "test"."id" = "deneme"."test_id"
-		LEFT JOIN "account" ON "deneme"."id" = "account"."deneme_id"
+		RIGHT JOIN "account" ON "deneme"."id" = "account"."deneme_id"
 		LEFT JOIN "group" ON "account"."group_id" = "group"."account_id"
 	WHERE (("deneme"."count" = @deneme__count)
 		AND ("account"."name" = @account__name) 
@@ -127,7 +128,7 @@ func TestGetWithRelations(t *testing.T) {
 			accountList.WithGroupList(func(groupList *models.GroupList) {
 				groupList.Where(groupList.IsNameEqual("group_name"))
 			})
-		})
+		}).SetJoinType(client.RelationJoinTypeRight)
 	})
 
 	err := test.Get()

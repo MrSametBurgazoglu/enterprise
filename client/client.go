@@ -75,10 +75,10 @@ func createTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []str
 	sqlString := ""
 	var relationWhereStrings []string
 	for _, rel := range model.GetRelationList().Relations {
-		sql := rel.GetJoinString(model.GetDBName())
+		sql := rel.getJoinString(model.GetDBName())
 		sqlString += sql
-		if rel.IsRelationHaveWhereClause() {
-			res := rel.ParseWhere()
+		if rel.isRelationHaveWhereClause() {
+			res := rel.parseWhere()
 			relationWhereStrings = append(relationWhereStrings, res.SqlString)
 			for i, s := range res.Names {
 				args[s] = res.Values[i]

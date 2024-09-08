@@ -260,7 +260,7 @@ func (t *Group) SetSurnameField() {
 
 }
 
-func (t *Group) WithAccountList(opts ...func(*AccountList)) {
+func (t *Group) WithAccountList(opts ...func(*AccountList)) *client.Relation {
 	t.AccountList = NewRelationAccountList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(t.AccountList)
@@ -273,24 +273,24 @@ func (t *Group) WithAccountList(opts ...func(*AccountList)) {
 		t.result.Account.relations = append(t.result.Account.relations, Relation.RelationResult)
 		t.result.Account.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:   t.AccountList,
-			RelationTable:   "account",
-			RelationResult:  t.result.Account,
-			Where:           t.AccountList.where,
-			ManyToManyTable: "account_group",
-			RelationWhere: &client.RelationCondition{
-				RelationValue:      "group_id",
-				TableValue:         "account_id",
-				RelationTableValue: "id",
-			},
+	r := &client.Relation{
+		RelationModel:   t.AccountList,
+		RelationTable:   "account",
+		RelationResult:  t.result.Account,
+		Where:           t.AccountList.where,
+		ManyToManyTable: "account_group",
+		RelationWhere: &client.RelationCondition{
+			RelationValue:      "group_id",
+			TableValue:         "account_id",
+			RelationTableValue: "id",
 		},
-	)
-	t.relations.RelationMap["account"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["account"] = r
+	return r
 }
 
-func (t *GroupList) WithAccountList(opts ...func(*AccountList)) {
+func (t *GroupList) WithAccountList(opts ...func(*AccountList)) *client.Relation {
 	v := NewRelationAccountList(t.ctx, t.client.Database)
 	for _, opt := range opts {
 		opt(v)
@@ -303,19 +303,19 @@ func (t *GroupList) WithAccountList(opts ...func(*AccountList)) {
 		t.result.Account.relations = append(t.result.Account.relations, Relation.RelationResult)
 		t.result.Account.relationsMap[Relation.RelationTable] = Relation.RelationResult
 	}
-	t.relations.Relations = append(t.relations.Relations,
-		&client.Relation{
-			RelationModel:  v,
-			RelationTable:  "account",
-			RelationResult: t.result.Account,
-			Where:          v.where,
-			RelationWhere: &client.RelationCondition{
-				RelationValue: "group_id",
-				TableValue:    "account_id",
-			},
+	r := &client.Relation{
+		RelationModel:  v,
+		RelationTable:  "account",
+		RelationResult: t.result.Account,
+		Where:          v.where,
+		RelationWhere: &client.RelationCondition{
+			RelationValue: "group_id",
+			TableValue:    "account_id",
 		},
-	)
-	t.relations.RelationMap["account"] = t.relations.Relations[len(t.relations.Relations)-1]
+	}
+	t.relations.Relations = append(t.relations.Relations, r)
+	t.relations.RelationMap["account"] = r
+	return r
 }
 
 func (t *GroupList) cleanAccountList() {
