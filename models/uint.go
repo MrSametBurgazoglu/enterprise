@@ -36,6 +36,7 @@ func UintField(name string) *UintDBField {
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.setField(name, "uint", FieldTypeUint)
 	f.IsGreater = true
+	f.CanIn = true
 	return f
 }
 

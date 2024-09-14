@@ -190,15 +190,6 @@ func (t *Test) ParseCreatedAt(layout, value string) error {
 	return nil
 }
 
-func (t *Test) IDIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return true
-		}
-	}
-	return false
-}
-
 func (t *Test) NameIN(v ...string) bool {
 	for _, x := range v {
 		if t.name == x {
@@ -208,36 +199,9 @@ func (t *Test) NameIN(v ...string) bool {
 	return false
 }
 
-func (t *Test) CreatedAtIN(v ...time.Time) bool {
-	for _, x := range v {
-		if t.createdat == x {
-			return true
-		}
-	}
-	return false
-}
-
-func (t *Test) IDNotIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return false
-		}
-	}
-	return true
-}
-
 func (t *Test) NameNotIN(v ...string) bool {
 	for _, x := range v {
 		if t.name == x {
-			return false
-		}
-	}
-	return true
-}
-
-func (t *Test) CreatedAtNotIN(v ...time.Time) bool {
-	for _, x := range v {
-		if t.createdat == x {
 			return false
 		}
 	}

@@ -13,6 +13,7 @@ const (
 	GroupIDField      string = "id"
 	GroupNameField    string = "name"
 	GroupSurnameField string = "surname"
+	GroupDataField    string = "data"
 )
 
 var databaseGroupOperationHook = func(operationInfo *client.OperationInfo, model *Group, operationFunc func() error) error {
@@ -55,6 +56,8 @@ type Group struct {
 	name string
 
 	surname string
+
+	data map[string]any
 
 	changedFields     map[string]any
 	changedFieldsList []string
@@ -144,6 +147,10 @@ func (t *Group) SetSurname(v string) {
 	t.surname = v
 	t.SetSurnameField()
 }
+func (t *Group) SetData(v map[string]any) {
+	t.data = v
+	t.SetDataField()
+}
 
 func (t *Group) SetIDNillable(v *uuid.UUID) {
 	if v == nil {
@@ -163,6 +170,12 @@ func (t *Group) SetSurnameNillable(v *string) {
 	}
 	t.SetSurname(*v)
 }
+func (t *Group) SetDataNillable(v *map[string]any) {
+	if v == nil {
+		return
+	}
+	t.SetData(*v)
+}
 
 func (t *Group) ParseID(v string) error {
 	parsedID, err := uuid.Parse(v)
@@ -172,15 +185,6 @@ func (t *Group) ParseID(v string) error {
 	t.id = parsedID
 	t.SetIDField()
 	return nil
-}
-
-func (t *Group) IDIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return true
-		}
-	}
-	return false
 }
 
 func (t *Group) NameIN(v ...string) bool {
@@ -199,15 +203,6 @@ func (t *Group) SurnameIN(v ...string) bool {
 		}
 	}
 	return false
-}
-
-func (t *Group) IDNotIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return false
-		}
-	}
-	return true
 }
 
 func (t *Group) NameNotIN(v ...string) bool {
@@ -237,6 +232,9 @@ func (t *Group) GetName() string {
 func (t *Group) GetSurname() string {
 	return t.surname
 }
+func (t *Group) GetData() map[string]any {
+	return t.data
+}
 
 func (t *Group) SetIDField() {
 	if _, exist := t.changedFields[GroupIDField]; !exist {
@@ -256,6 +254,13 @@ func (t *Group) SetSurnameField() {
 	if _, exist := t.changedFields[GroupSurnameField]; !exist {
 		t.changedFields[GroupSurnameField] = t.surname
 		t.changedFieldsList = append(t.changedFieldsList, GroupSurnameField)
+	}
+
+}
+func (t *Group) SetDataField() {
+	if _, exist := t.changedFields[GroupDataField]; !exist {
+		t.changedFields[GroupDataField] = t.data
+		t.changedFieldsList = append(t.changedFieldsList, GroupDataField)
 	}
 
 }
@@ -356,6 +361,7 @@ func (t *Group) ScanResult() {
 	t.id = t.result.id
 	t.name = t.result.name
 	t.surname = t.result.surname
+	t.data = t.result.data
 
 	if _, ok := t.relations.RelationMap["account"]; ok {
 		if t.AccountList == nil {
@@ -553,6 +559,7 @@ type GroupResult struct {
 	id      uuid.UUID
 	name    string
 	surname string
+	data    map[string]any
 
 	selectedFields []*client.SelectedField
 
@@ -596,6 +603,11 @@ func (t *GroupResult) SelectSurname() {
 	t.selectedFields = append(t.selectedFields, v)
 }
 
+func (t *GroupResult) SelectData() {
+	v := &client.SelectedField{Name: GroupDataField, Value: &t.data}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
 func (t *GroupResult) GetDBName() string {
 	return GroupTableName
 }
@@ -604,6 +616,7 @@ func (t *GroupResult) SelectAll() {
 	t.SelectID()
 	t.SelectName()
 	t.SelectSurname()
+	t.SelectData()
 
 }
 

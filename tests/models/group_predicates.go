@@ -49,6 +49,15 @@ func (t *GroupPredicate) IsSurnameEqual(v string) *client.Where {
 	}
 }
 
+func (t *GroupPredicate) IsDataEqual(v map[string]any) *client.Where {
+	return &client.Where{
+		Type:     client.EQ,
+		Name:     GroupDataField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *GroupPredicate) IsIDNotEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.NEQ,
@@ -71,6 +80,15 @@ func (t *GroupPredicate) IsSurnameNotEqual(v string) *client.Where {
 	return &client.Where{
 		Type:     client.NEQ,
 		Name:     GroupSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsDataNotEqual(v map[string]any) *client.Where {
+	return &client.Where{
+		Type:     client.NEQ,
+		Name:     GroupDataField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -103,6 +121,15 @@ func (t *GroupPredicate) IsSurnameIN(v ...string) *client.Where {
 	}
 }
 
+func (t *GroupPredicate) IsDataIN(v ...map[string]any) *client.Where {
+	return &client.Where{
+		Type:     client.ANY,
+		Name:     GroupDataField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *GroupPredicate) IsIDNotIN(v ...uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
@@ -125,6 +152,15 @@ func (t *GroupPredicate) IsSurnameNotIN(v ...string) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
 		Name:     GroupSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsDataNotIN(v ...map[string]any) *client.Where {
+	return &client.Where{
+		Type:     client.NANY,
+		Name:     GroupDataField,
 		HasValue: true,
 		Value:    v,
 	}

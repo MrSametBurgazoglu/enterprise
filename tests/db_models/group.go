@@ -13,6 +13,7 @@ func Group() *models.Table {
 			idField,
 			models.StringField("Name"),
 			models.StringField("Surname"),
+			models.JSONField("Data"),
 		},
 		Relations: []*models.Relation{
 			models.ManyToMany(AccountName, "group_id", "account_id", "id", AccountGroupName),

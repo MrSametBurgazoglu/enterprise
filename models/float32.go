@@ -36,6 +36,7 @@ func Float32Field(name string) *Float32DBField {
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.setField(name, "float32", FieldTypeFloat32)
 	f.IsGreater = true
+	f.CanIn = true
 	return f
 }
 

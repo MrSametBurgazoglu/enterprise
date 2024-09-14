@@ -36,6 +36,7 @@ func IntField(name string) *IntDBField {
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.setField(name, "int", FieldTypeInt)
 	f.IsGreater = true
+	f.CanIn = true
 	return f
 }
 

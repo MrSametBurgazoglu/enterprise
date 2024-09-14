@@ -1,46 +1,41 @@
 package models
 
-import "strconv"
-
-type Float64DBField struct {
+type ByteDBField struct {
 	*Field
-	DefaultValue      int
+	DefaultValue      []byte
 	DefaultFuncStruct *FuncStruct
 }
 
-func (i *Float64DBField) GetDefault() string {
+func (i *ByteDBField) GetDefault() string {
 	if i.DefaultFuncStruct.PackageFunc != "" {
 		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
 		return i.DefaultFuncStruct.PackageFunc + "()"
-	} else {
-		return strconv.Itoa(i.DefaultValue)
 	}
+	return ""
 }
 
-func (i *Float64DBField) Default(v int) *Float64DBField {
+func (i *ByteDBField) Default(v []byte) *ByteDBField {
 	i.DefaultValue = v
 	i.HaveDefault = true
 	return i
 }
 
-func (i *Float64DBField) DefaultFunc(v func() int) *Float64DBField {
+func (i *ByteDBField) DefaultFunc(v func() bool) *ByteDBField {
 	i.DefaultFuncStruct.DefaultFunc(v)
 	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
 	i.HaveDefault = true
 	return i
 }
 
-func Float64Field(name string) *Float64DBField {
-	f := &Float64DBField{}
+func ByteField(name string) *ByteDBField {
+	f := &ByteDBField{}
 	f.Field = new(Field)
 	f.DefaultFuncStruct = new(FuncStruct)
-	f.setField(name, "float64", FieldTypeFloat64)
-	f.IsGreater = true
-	f.CanIn = true
+	f.setField(name, "[]byte", FieldTypeByte)
 	return f
 }
 
-func (i *Float64DBField) SetDBName(v string) *Float64DBField {
+func (i *ByteDBField) SetDBName(v string) *ByteDBField {
 	i.DBName = v
 	return i
 }

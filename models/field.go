@@ -16,6 +16,8 @@ const (
 	FieldTypeTime
 	FieldTypeUUID
 	FieldTypeUint
+	FieldTypeByte
+	FieldTypeJSON
 )
 
 type FieldI interface {
@@ -41,6 +43,7 @@ type Field struct {
 	HaveCustomType   bool
 	IsTime           bool
 	IsUUID           bool
+	CanIn            bool
 	Serial           bool
 	RequiredPackages []string
 }
@@ -97,6 +100,10 @@ func (f *Field) IsSerial() bool {
 
 func (f *Field) IsDefault() bool {
 	return f.HaveDefault
+}
+
+func (f *Field) IsCanIn() bool {
+	return f.CanIn
 }
 
 func (f *Field) NeedPrepare() bool {

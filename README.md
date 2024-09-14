@@ -41,8 +41,8 @@ V0.2.0
 - [x] Choose Join Type
 
 V0.3.0
-- [ ] Json field
-- [ ] []byte field
+- [x] Json field
+- [x] []byte field
 
 V0.4.0
 - [ ] Use different clients on Read and Write db operations
@@ -60,6 +60,7 @@ V0.8.0
 - [ ] Nice and beautiful Debug Mode with logger
 
 V0.9.0
+- [ ] Customizable helper functions
 - [ ] %100 covered unit tests
 - [ ] Fully Documentation
 - [ ] Github Actions

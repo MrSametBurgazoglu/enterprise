@@ -23,10 +23,6 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 			if relation.RelationType == 1 { //many to one
 				continue
 			}
-			println("symbol", symbol)
-			println("on", relation.OnField, "relation", relation.RelationField)
-			println(relation.RelationType)
-
 			fk := schema.NewForeignKey(symbol).
 				SetTable(tableMap[table.DBName]).
 				SetRefTable(tableMap[relation.RelationTableDBName]).
@@ -151,6 +147,10 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 		t = &schema.TimeType{T: postgres.TypeTimestampWTZ}
 	case models.FieldTypeEnum:
 		t = &schema.StringType{T: postgres.TypeVarChar}
+	case models.FieldTypeByte:
+		t = &schema.BinaryType{T: postgres.TypeBytea}
+	case models.FieldTypeJSON:
+		t = &schema.JSONType{T: postgres.TypeJSONB}
 	default:
 		return nil
 	}

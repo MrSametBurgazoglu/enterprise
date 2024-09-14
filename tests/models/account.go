@@ -211,15 +211,6 @@ func (t *Account) ParseDenemeID(v string) error {
 	return nil
 }
 
-func (t *Account) IDIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return true
-		}
-	}
-	return false
-}
-
 func (t *Account) NameIN(v ...string) bool {
 	for _, x := range v {
 		if t.name == x {
@@ -238,18 +229,6 @@ func (t *Account) SurnameIN(v ...string) bool {
 	return false
 }
 
-func (t *Account) DenemeIDIN(v ...uuid.UUID) bool {
-	if t.denemeid == nil {
-		return false
-	}
-	for _, x := range v {
-		if *t.denemeid == x {
-			return true
-		}
-	}
-	return false
-}
-
 func (t *Account) SerialIN(v ...uint) bool {
 	for _, x := range v {
 		if t.serial == x {
@@ -257,15 +236,6 @@ func (t *Account) SerialIN(v ...uint) bool {
 		}
 	}
 	return false
-}
-
-func (t *Account) IDNotIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return false
-		}
-	}
-	return true
 }
 
 func (t *Account) NameNotIN(v ...string) bool {
@@ -280,18 +250,6 @@ func (t *Account) NameNotIN(v ...string) bool {
 func (t *Account) SurnameNotIN(v ...string) bool {
 	for _, x := range v {
 		if t.surname == x {
-			return false
-		}
-	}
-	return true
-}
-
-func (t *Account) DenemeIDNotIN(v ...uuid.UUID) bool {
-	if t.denemeid == nil {
-		return true
-	}
-	for _, x := range v {
-		if *t.denemeid == x {
 			return false
 		}
 	}

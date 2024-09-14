@@ -37,6 +37,7 @@ func EnumField(name string, values []string) *EnumDBField {
 	f.setField(name, f.TypeName, FieldTypeEnum)
 	f.Values = values
 	f.HaveCustomType = true
+	f.CanIn = true
 	return f
 }
 

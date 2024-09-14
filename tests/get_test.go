@@ -58,7 +58,8 @@ func TestGetWithRelations(t *testing.T) {
     "account"."serial",
     "group"."id",
     "group"."name",
-    "group"."surname"
+    "group"."surname",
+    "group"."data"
 	FROM test
 	    LEFT JOIN "deneme" ON "test"."id" = "deneme"."test_id"
 		RIGHT JOIN "account" ON "deneme"."id" = "account"."deneme_id"
@@ -86,15 +87,15 @@ func TestGetWithRelations(t *testing.T) {
 		{testID, "test_name", createdAt,
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID1, "account_name", "account1_surname", denemeID, serial,
-			groupID1, "group_name", "group1_surname"},
+			groupID1, "group_name", "group1_surname", map[string]any{"deneme": "value1"}},
 		{testID, "test_name", createdAt,
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
-			groupID2, "group_name", "group2_surname"},
+			groupID2, "group_name", "group2_surname", map[string]any{"deneme": "value2"}},
 		{testID, "test_name", createdAt,
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
-			groupID3, "group_name", "group3_surname"}}
+			groupID3, "group_name", "group3_surname", map[string]any{"deneme": "value3"}}}
 
 	resultRow := pgxmock.NewRows([]string{
 		"id",
@@ -112,7 +113,8 @@ func TestGetWithRelations(t *testing.T) {
 		"serial",
 		"id",
 		"name",
-		"surname"},
+		"surname",
+		"data"},
 	).
 		AddRows(values...)
 
@@ -159,12 +161,15 @@ func TestGetWithRelations(t *testing.T) {
 	assert.Equal(t, groupID1, test.DenemeList.Items[0].AccountList.Items[0].GroupList.Items[0].GetID())
 	assert.Equal(t, "group_name", test.DenemeList.Items[0].AccountList.Items[0].GroupList.Items[0].GetName())
 	assert.Equal(t, "group1_surname", test.DenemeList.Items[0].AccountList.Items[0].GroupList.Items[0].GetSurname())
+	assert.Equal(t, "value1", test.DenemeList.Items[0].AccountList.Items[0].GroupList.Items[0].GetData()["deneme"])
 
 	assert.Equal(t, groupID2, test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[0].GetID())
 	assert.Equal(t, "group_name", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[0].GetName())
 	assert.Equal(t, "group2_surname", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[0].GetSurname())
+	assert.Equal(t, "value2", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[0].GetData()["deneme"])
 
 	assert.Equal(t, groupID3, test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetID())
 	assert.Equal(t, "group_name", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetName())
 	assert.Equal(t, "group3_surname", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetSurname())
+	assert.Equal(t, "value3", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetData()["deneme"])
 }

@@ -218,39 +218,9 @@ func (t *Deneme) ParseTestID(v string) error {
 	return nil
 }
 
-func (t *Deneme) IDIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return true
-		}
-	}
-	return false
-}
-
-func (t *Deneme) TestIDIN(v ...uuid.UUID) bool {
-	if t.testid == nil {
-		return false
-	}
-	for _, x := range v {
-		if *t.testid == x {
-			return true
-		}
-	}
-	return false
-}
-
 func (t *Deneme) CountIN(v ...int) bool {
 	for _, x := range v {
 		if t.count == x {
-			return true
-		}
-	}
-	return false
-}
-
-func (t *Deneme) IsActiveIN(v ...bool) bool {
-	for _, x := range v {
-		if t.isactive == x {
 			return true
 		}
 	}
@@ -266,39 +236,9 @@ func (t *Deneme) DenemeTypeIN(v ...DenemeType) bool {
 	return false
 }
 
-func (t *Deneme) IDNotIN(v ...uuid.UUID) bool {
-	for _, x := range v {
-		if t.id == x {
-			return false
-		}
-	}
-	return true
-}
-
-func (t *Deneme) TestIDNotIN(v ...uuid.UUID) bool {
-	if t.testid == nil {
-		return true
-	}
-	for _, x := range v {
-		if *t.testid == x {
-			return false
-		}
-	}
-	return true
-}
-
 func (t *Deneme) CountNotIN(v ...int) bool {
 	for _, x := range v {
 		if t.count == x {
-			return false
-		}
-	}
-	return true
-}
-
-func (t *Deneme) IsActiveNotIN(v ...bool) bool {
-	for _, x := range v {
-		if t.isactive == x {
 			return false
 		}
 	}

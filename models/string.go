@@ -32,6 +32,7 @@ func StringField(name string) *StringDBField {
 	f.Field = new(Field)
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.setField(name, "string", FieldTypeString)
+	f.CanIn = true
 	return f
 }
 

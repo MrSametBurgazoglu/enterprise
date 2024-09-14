@@ -201,6 +201,7 @@ func (t *{{$.TableName}}) Parse{{.GetName}}(v string) error{
 {{end}}
 
 {{range .Fields}}
+{{if .IsCanIn}}
 func (t *{{$.TableName}}) {{.GetName}}IN(v ...{{.GetBaseType}}) bool{ {{if .IsNillable}}
     if t.{{.GetNameLower}} == nil{
         return false
@@ -212,9 +213,10 @@ func (t *{{$.TableName}}) {{.GetName}}IN(v ...{{.GetBaseType}}) bool{ {{if .IsNi
     }
     return false
 }
-{{end}}
+{{end}}{{end}}
 
 {{range .Fields}}
+{{if .IsCanIn}}
 func (t *{{$.TableName}}) {{.GetName}}NotIN(v ...{{.GetBaseType}}) bool{ {{if .IsNillable}}
     if t.{{.GetNameLower}} == nil{
         return true
@@ -226,7 +228,7 @@ func (t *{{$.TableName}}) {{.GetName}}NotIN(v ...{{.GetBaseType}}) bool{ {{if .I
     }
     return true
 }
-{{end}}
+{{end}}{{end}}
 
 {{range .Fields}}
 func (t *{{$.TableName}}) Get{{.GetName}}() {{.GetType}}{
