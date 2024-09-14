@@ -45,7 +45,7 @@ V0.3.0
 - [x] []byte field
 
 V0.4.0
-- [ ] Use different clients on Read and Write db operations
+- [x] Use different clients on Read and Write db operations
 
 V0.5.0
 - [ ] Custom go type on DB

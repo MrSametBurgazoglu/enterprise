@@ -95,6 +95,10 @@ func (t *Group) GetPrimaryKey() uuid.UUID {
 	return t.id
 }
 
+func (t *Group) SetClient(client *client.Client) {
+	t.client = client
+}
+
 func NewGroupList(ctx context.Context, dc client.DatabaseClient) *GroupList {
 	v := &GroupList{client: client.NewClient(dc), ctx: ctx}
 	v.relations = new(client.RelationList)
@@ -133,6 +137,10 @@ func (t *GroupList) GetRelationList() *client.RelationList {
 
 func (t *GroupList) IsExist() bool {
 	return t.Items[len(t.Items)-1].IsExist()
+}
+
+func (t *GroupList) SetClient(client *client.Client) {
+	t.client = client
 }
 
 func (t *Group) SetID(v uuid.UUID) {

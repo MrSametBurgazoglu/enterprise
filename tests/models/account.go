@@ -99,6 +99,10 @@ func (t *Account) GetPrimaryKey() uuid.UUID {
 	return t.id
 }
 
+func (t *Account) SetClient(client *client.Client) {
+	t.client = client
+}
+
 func NewAccountList(ctx context.Context, dc client.DatabaseClient) *AccountList {
 	v := &AccountList{client: client.NewClient(dc), ctx: ctx}
 	v.relations = new(client.RelationList)
@@ -137,6 +141,10 @@ func (t *AccountList) GetRelationList() *client.RelationList {
 
 func (t *AccountList) IsExist() bool {
 	return t.Items[len(t.Items)-1].IsExist()
+}
+
+func (t *AccountList) SetClient(client *client.Client) {
+	t.client = client
 }
 
 func (t *Account) SetID(v uuid.UUID) {

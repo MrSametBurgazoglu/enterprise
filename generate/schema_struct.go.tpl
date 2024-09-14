@@ -99,6 +99,11 @@ func (t *{{$.TableName}}) GetPrimaryKey() {{.IDFieldType}}{
     return t.{{.IDFieldLower}}
 }
 
+func (t *{{$.TableName}}) SetClient(client *client.Client) {
+    t.client = client
+}
+
+
 
 
 func New{{.TableName}}List(ctx context.Context, dc client.DatabaseClient) *{{.TableName}}List{
@@ -139,6 +144,10 @@ func (t *{{$.TableName}}List) GetRelationList() *client.RelationList{
 
 func (t *{{$.TableName}}List) IsExist() bool{
     return t.Items[len(t.Items)-1].IsExist()
+}
+
+func (t *{{$.TableName}}List) SetClient(client *client.Client) {
+    t.client = client
 }
 
 

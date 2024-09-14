@@ -106,6 +106,10 @@ func (t *Deneme) GetPrimaryKey() uuid.UUID {
 	return t.id
 }
 
+func (t *Deneme) SetClient(client *client.Client) {
+	t.client = client
+}
+
 func NewDenemeList(ctx context.Context, dc client.DatabaseClient) *DenemeList {
 	v := &DenemeList{client: client.NewClient(dc), ctx: ctx}
 	v.relations = new(client.RelationList)
@@ -144,6 +148,10 @@ func (t *DenemeList) GetRelationList() *client.RelationList {
 
 func (t *DenemeList) IsExist() bool {
 	return t.Items[len(t.Items)-1].IsExist()
+}
+
+func (t *DenemeList) SetClient(client *client.Client) {
+	t.client = client
 }
 
 func (t *Deneme) SetID(v uuid.UUID) {
