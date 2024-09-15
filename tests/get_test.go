@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"github.com/MrSametBurgazoglu/enterprise/mock"
+	"github.com/MrSametBurgazoglu/enterprise/tests/custom_data_type"
 	"github.com/MrSametBurgazoglu/enterprise/tests/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -46,6 +47,7 @@ func TestGetWithRelations(t *testing.T) {
 	"test"."id",
     "test"."name",
     "test"."created_at",
+    "test"."info",
     "deneme"."id",
     "deneme"."test_id",
     "deneme"."count",
@@ -83,24 +85,29 @@ func TestGetWithRelations(t *testing.T) {
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()
 
+	custom := custom_data_type.Custom{Hello: "hello", World: "world"}
+	v, _ := custom.Value()
+
 	values := [][]any{
-		{testID, "test_name", createdAt,
+		{testID, "test_name", createdAt, nil,
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID1, "account_name", "account1_surname", denemeID, serial,
 			groupID1, "group_name", "group1_surname", map[string]any{"deneme": "value1"}},
-		{testID, "test_name", createdAt,
+		{testID, "test_name", createdAt, nil,
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
 			groupID2, "group_name", "group2_surname", map[string]any{"deneme": "value2"}},
-		{testID, "test_name", createdAt,
+		{testID, "test_name", createdAt, any(v),
 			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
-			groupID3, "group_name", "group3_surname", map[string]any{"deneme": "value3"}}}
+			groupID3, "group_name", "group3_surname", map[string]any{"deneme": "value3"}},
+	}
 
 	resultRow := pgxmock.NewRows([]string{
 		"id",
 		"name",
 		"created_at",
+		"info",
 		"id",
 		"test_id",
 		"count",

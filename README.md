@@ -48,7 +48,7 @@ V0.4.0
 - [x] Use different clients on Read and Write db operations
 
 V0.5.0
-- [ ] Custom go type on DB
+- [x] Custom go type on DB
 
 V0.6.0
 - [ ] Nested Transactions, Save Point, RollbackTo to Saved Point

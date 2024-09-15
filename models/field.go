@@ -18,6 +18,7 @@ const (
 	FieldTypeUint
 	FieldTypeByte
 	FieldTypeJSON
+	FieldTypeCustom
 )
 
 type FieldI interface {
@@ -26,6 +27,7 @@ type FieldI interface {
 	GetType() string
 	GetName() string
 	GetDBName() string
+	GetCustomType() string
 	IsNillable() bool
 	IsSerial() bool
 }
@@ -45,6 +47,7 @@ type Field struct {
 	IsUUID           bool
 	CanIn            bool
 	Serial           bool
+	CustomDBType     string
 	RequiredPackages []string
 }
 
@@ -62,6 +65,10 @@ func (f *Field) GetNameTitle() string {
 
 func (f *Field) GetDBName() string {
 	return f.DBName
+}
+
+func (f *Field) GetCustomType() string {
+	return f.CustomDBType
 }
 
 func (f *Field) SetDBName(v string) {

@@ -151,6 +151,8 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 		t = &schema.BinaryType{T: postgres.TypeBytea}
 	case models.FieldTypeJSON:
 		t = &schema.JSONType{T: postgres.TypeJSONB}
+	case models.FieldTypeCustom:
+		t = &schema.UnsupportedType{T: field.GetCustomType()}
 	default:
 		return nil
 	}

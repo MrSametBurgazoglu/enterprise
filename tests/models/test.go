@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/MrSametBurgazoglu/enterprise/client"
 
+	"github.com/MrSametBurgazoglu/enterprise/tests/custom_data_type"
 	"github.com/google/uuid"
 	"time"
 )
@@ -14,6 +15,7 @@ const (
 	TestIDField        string = "id"
 	TestNameField      string = "name"
 	TestCreatedAtField string = "created_at"
+	TestInfoField      string = "info"
 )
 
 var databaseTestOperationHook = func(operationInfo *client.OperationInfo, model *Test, operationFunc func() error) error {
@@ -56,6 +58,8 @@ type Test struct {
 	name string
 
 	createdat time.Time
+
+	info *custom_data_type.Custom
 
 	changedFields     map[string]any
 	changedFieldsList []string
@@ -153,6 +157,15 @@ func (t *Test) SetCreatedAt(v time.Time) {
 	t.createdat = v
 	t.SetCreatedAtField()
 }
+func (t *Test) SetInfo(v *custom_data_type.Custom) {
+	t.info = v
+	t.SetInfoField()
+}
+
+func (t *Test) SetInfoValue(v custom_data_type.Custom) {
+	t.SetInfo(&v)
+	t.SetInfoField()
+}
 
 func (t *Test) SetIDNillable(v *uuid.UUID) {
 	if v == nil {
@@ -225,6 +238,9 @@ func (t *Test) GetName() string {
 func (t *Test) GetCreatedAt() time.Time {
 	return t.createdat
 }
+func (t *Test) GetInfo() *custom_data_type.Custom {
+	return t.info
+}
 
 func (t *Test) SetIDField() {
 	if _, exist := t.changedFields[TestIDField]; !exist {
@@ -244,6 +260,13 @@ func (t *Test) SetCreatedAtField() {
 	if _, exist := t.changedFields[TestCreatedAtField]; !exist {
 		t.changedFields[TestCreatedAtField] = t.createdat
 		t.changedFieldsList = append(t.changedFieldsList, TestCreatedAtField)
+	}
+
+}
+func (t *Test) SetInfoField() {
+	if _, exist := t.changedFields[TestInfoField]; !exist {
+		t.changedFields[TestInfoField] = t.info
+		t.changedFieldsList = append(t.changedFieldsList, TestInfoField)
 	}
 
 }
@@ -343,6 +366,7 @@ func (t *Test) ScanResult() {
 	t.id = t.result.id
 	t.name = t.result.name
 	t.createdat = t.result.createdat
+	t.info = t.result.info
 
 	if _, ok := t.relations.RelationMap["deneme"]; ok {
 		if t.DenemeList == nil {
@@ -540,6 +564,7 @@ type TestResult struct {
 	id        uuid.UUID
 	name      string
 	createdat time.Time
+	info      *custom_data_type.Custom
 
 	selectedFields []*client.SelectedField
 
@@ -583,6 +608,12 @@ func (t *TestResult) SelectCreatedAt() {
 	t.selectedFields = append(t.selectedFields, v)
 }
 
+func (t *TestResult) SelectInfo() {
+
+	v := &client.SelectedField{Name: TestInfoField, Value: t.info}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
 func (t *TestResult) GetDBName() string {
 	return TestTableName
 }
@@ -591,6 +622,7 @@ func (t *TestResult) SelectAll() {
 	t.SelectID()
 	t.SelectName()
 	t.SelectCreatedAt()
+	t.SelectInfo()
 
 }
 
