@@ -9,7 +9,7 @@ import (
 )
 
 type IDatabase interface {
-	NewTransaction(ctx context.Context) (client.DatabaseTransactionClient, error)
+	NewTransaction(ctx context.Context, options ...pgx.TxOptions) (client.DatabaseTransactionClient, error)
 	Exit()
 	AddBeginHooks(...func())
 	AddEndHooks(...func())
@@ -51,11 +51,22 @@ func (d *Database) SetupPostgres(dbUrl string) error {
 	return nil
 }
 
-func (d *Database) NewTransaction(ctx context.Context) (client.DatabaseTransactionClient, error) {
-	tx, err := d.Pool.Begin(ctx)
+func (d *Database) NewTransaction(ctx context.Context, options ...pgx.TxOptions) (client.DatabaseTransactionClient, error) {
+	var (
+		err error
+		tx  pgx.Tx
+	)
+
+	if len(options) == 0 {
+		tx, err = d.Pool.Begin(ctx)
+	} else {
+		tx, err = d.Pool.BeginTx(ctx, options[0])
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &Transaction{Tx: tx}, nil
 }
 
@@ -79,6 +90,14 @@ func (t Transaction) EndHook() {
 	for _, hook := range t.EndHooks {
 		hook()
 	}
+}
+
+func (t Transaction) SavePoint(ctx context.Context) (client.DatabaseTransactionClient, error) {
+	tx, err := t.Tx.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &Transaction{Tx: tx}, nil
 }
 
 func NewDB(dbUrl string) (IDatabase, error) {

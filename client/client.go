@@ -23,6 +23,7 @@ type DatabaseTransactionClient interface {
 	DatabaseClient
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
+	SavePoint(ctx context.Context) (DatabaseTransactionClient, error)
 }
 
 var NotFoundError = errors.New("not found")

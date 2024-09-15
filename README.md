@@ -51,7 +51,7 @@ V0.5.0
 - [x] Custom go type on DB
 
 V0.6.0
-- [ ] Nested Transactions, Save Point, RollbackTo to Saved Point
+- [x] Nested Transactions, Save Point, RollbackTo to Saved Point
 
 V0.7.0
 - [ ] Composite primary key
