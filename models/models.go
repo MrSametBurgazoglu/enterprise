@@ -81,6 +81,7 @@ type Table struct {
 	Relations        []*Relation
 	IDColumn         FieldI
 	RequiredPackages []string
+	Indexes          []Index
 }
 
 func (t *Table) SetTableName(name string) {
@@ -98,4 +99,13 @@ func (t *Table) SetIDField(field FieldI) {
 
 func (t *Table) IDFieldLower() string {
 	return strings.ToLower(t.IDField)
+}
+
+func (t *Table) AddIndex(name string, columnNames ...string) {
+	t.Indexes = append(t.Indexes, Index{Name: name, Columns: columnNames})
+}
+
+type Index struct {
+	Name    string
+	Columns []string
 }

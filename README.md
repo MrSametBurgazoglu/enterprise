@@ -54,7 +54,7 @@ V0.6.0
 - [x] Nested Transactions, Save Point, RollbackTo to Saved Point
 
 V0.7.0
-- [ ] Composite primary key
+- [x] Index and Composite Index
 
 V0.8.0
 - [ ] Nice and beautiful Debug Mode with logger

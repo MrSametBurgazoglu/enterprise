@@ -24,6 +24,7 @@ func Account() *models.Table {
 
 	tb.SetTableName(AccountName)
 	tb.SetIDField(idField)
+	tb.AddIndex("name_surname_index", "Name", "Surname")
 
 	return tb
 }

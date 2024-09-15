@@ -105,6 +105,17 @@ func TransformTableToAtlasTable(table *models.Table) *schema.Table {
 	for _, field := range table.Fields {
 		dbTable.Columns = append(dbTable.Columns, TransformFieldToAtlasColumn(field))
 	}
+
+	for _, index := range table.Indexes {
+		var columns []*schema.Column
+		for _, columnName := range index.Columns {
+			columns = append(columns, schema.NewColumn(columnName))
+		}
+		schemaIndex := schema.NewIndex(index.Name)
+		schemaIndex.AddColumns(columns...)
+		dbTable.Indexes = append(dbTable.Indexes, schemaIndex)
+	}
+
 	return dbTable
 }
 
