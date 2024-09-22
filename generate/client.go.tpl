@@ -4,47 +4,62 @@ import (
 	"context"
 	"fmt"
 	"github.com/MrSametBurgazoglu/enterprise/client"
+	"github.com/MrSametBurgazoglu/enterprise/logger"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"log/slog"
+	"os"
 )
+
+type Options struct {
+	Url   string
+	Debug bool
+}
 
 type IDatabase interface {
 	NewTransaction(ctx context.Context, options ...pgx.TxOptions) (client.DatabaseTransactionClient, error)
 	Exit()
-	AddBeginHooks(...func())
-	AddEndHooks(...func())
 	client.DatabaseClient
 }
 
 type Database struct {
-	*pgxpool.Pool
-	BeginHooks []func()
-	EndHooks   []func()
+	pool    *pgxpool.Pool
+	Options *Options
+	Logger  logger.Logger
 }
 
-func (d *Database) AddBeginHooks(f ...func()) {
-	d.BeginHooks = f
-}
-
-func (d *Database) AddEndHooks(f ...func()) {
-	d.EndHooks = f
-}
-
-func (d *Database) BeginHook() {
-	for _, hook := range d.BeginHooks {
-		hook()
+func (d *Database) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
+	commandTag, err = d.pool.Exec(ctx, sql, arguments)
+	if err != nil {
+		d.Logger.LogError(ctx, sql, arguments[0].(pgx.NamedArgs), err)
+	} else if d.Options.Debug {
+		d.Logger.Log(ctx, sql, arguments[0].(pgx.NamedArgs))
 	}
+	return commandTag, err
 }
 
-func (d *Database) EndHook() {
-	for _, hook := range d.EndHooks {
-		hook()
+func (d *Database) Query(ctx context.Context, sql string, args ...any) (rows pgx.Rows, err error) {
+	rows, err = d.pool.Query(ctx, sql, args)
+	if err != nil {
+		d.Logger.LogError(ctx, sql, args[0].(pgx.NamedArgs), err)
+	} else if d.Options.Debug {
+		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
 	}
+	return rows, err
+}
+
+func (d *Database) QueryRow(ctx context.Context, sql string, args ...any) (row pgx.Row) {
+	row = d.pool.QueryRow(ctx, sql, args)
+	if d.Options.Debug {
+		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
+	}
+	return row
 }
 
 func (d *Database) SetupPostgres(dbUrl string) error {
 	var err error
-	d.Pool, err = pgxpool.New(context.Background(), dbUrl)
+	d.pool, err = pgxpool.New(context.Background(), dbUrl)
 	if err != nil {
 		return fmt.Errorf("Unable to create connection pool: %v\n", err)
 	}
@@ -58,9 +73,9 @@ func (d *Database) NewTransaction(ctx context.Context, options ...pgx.TxOptions)
 	)
 
 	if len(options) == 0 {
-		tx, err = d.Pool.Begin(ctx)
+		tx, err = d.pool.Begin(ctx)
 	} else {
-		tx, err = d.Pool.BeginTx(ctx, options[0])
+		tx, err = d.pool.BeginTx(ctx, options[0])
 	}
 
 	if err != nil {
@@ -71,25 +86,16 @@ func (d *Database) NewTransaction(ctx context.Context, options ...pgx.TxOptions)
 }
 
 func (d *Database) Exit() {
-	d.Pool.Close()
+	d.pool.Close()
 }
 
 type Transaction struct {
-	BeginHooks []func()
-	EndHooks   []func()
+	Logger logger.Logger
 	pgx.Tx
 }
 
-func (t Transaction) BeginHook() {
-	for _, hook := range t.BeginHooks {
-		hook()
-	}
-}
-
-func (t Transaction) EndHook() {
-	for _, hook := range t.EndHooks {
-		hook()
-	}
+func (t Transaction) GetLogger() logger.Logger {
+	return t.Logger
 }
 
 func (t Transaction) SavePoint(ctx context.Context) (client.DatabaseTransactionClient, error) {
@@ -97,11 +103,17 @@ func (t Transaction) SavePoint(ctx context.Context) (client.DatabaseTransactionC
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{Tx: tx}, nil
+	return &Transaction{Tx: tx, Logger: t.Logger}, nil
 }
 
-func NewDB(dbUrl string) (IDatabase, error) {
-	d := &Database{}
-	err := d.SetupPostgres(dbUrl)
+func NewDB(options *Options) (IDatabase, error) {
+	d := &Database{Options: options}
+	err := d.SetupPostgres(options.Url)
+	slogger := initializeSlog(slog.LevelDebug)
+	d.Logger = logger.NewLogger(slogger)
 	return d, err
+}
+
+func initializeSlog(logLevel slog.Level) *slog.Logger {
+	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 }

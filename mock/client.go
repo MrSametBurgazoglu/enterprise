@@ -11,14 +11,6 @@ type Client struct {
 	pgxmock.PgxPoolIface
 }
 
-func (c *Client) BeginHook() {
-	return
-}
-
-func (c *Client) EndHook() {
-	return
-}
-
 func NewMockClient() *Client {
 	conn, _ := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
 	return &Client{PgxPoolIface: conn}

@@ -9,14 +9,10 @@ import (
 	"strings"
 )
 
-//todo add return serial values from create
-
 type DatabaseClient interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-	BeginHook()
-	EndHook()
 }
 
 type DatabaseTransactionClient interface {
@@ -189,9 +185,6 @@ func ScanNextRows(rows pgx.Rows, model Model, selectedAddress []any) error {
 }
 
 func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model, result Result) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, selectedAddress, args := CreateSelectQuery(list, model, result)
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
@@ -213,9 +206,6 @@ func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model,
 }
 
 func (receiver *Client) Refresh(ctx context.Context, model Model, result Result, idName string, idValue any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	var selectedNames []string
 	var selectedAddresses []any
 
@@ -261,9 +251,6 @@ func CreateInsertQuery(fields map[string]any, fieldsList []string) (string, stri
 }
 
 func (receiver *Client) Create(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, serialFields []*SelectedField) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	nameString, valueString, args := CreateInsertQuery(fields, fieldsList)
 
 	var serialSql string
@@ -308,9 +295,6 @@ func CreateUpdateQuery(fields map[string]any, fieldsList []string) (string, pgx.
 }
 
 func (receiver *Client) Update(ctx context.Context, tableName string, fields map[string]any, fieldslist []string, idName string, idValue any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	statements, args := CreateUpdateQuery(fields, fieldslist)
 
 	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s = @idvalue", tableName, statements, idName)
@@ -324,9 +308,6 @@ func (receiver *Client) Update(ctx context.Context, tableName string, fields map
 }
 
 func (receiver *Client) Delete(ctx context.Context, tableName string, idName string, idValue any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE %s = @idvalue;", tableName, idName)
 
 	args := pgx.NamedArgs{}
@@ -368,9 +349,6 @@ func ScanListNextRows(rows pgx.Rows, model Model, selectedAddress []any) error {
 }
 
 func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model, result Result, orders []*Order, paging *Paging) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, selectedAddress, args := CreateSelectListQuery(list, model, result, orders, paging)
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
@@ -436,9 +414,6 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 }
 
 func (receiver *Client) Aggregate(ctx context.Context, list []*WhereList, model Model, aggregate *Aggregate) (func() error, error) {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, args := CreateAggregateQuery(list, model, aggregate)
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
@@ -465,9 +440,6 @@ func CreateAddRelationQuery(relationshipTable, id, relationshipID string, idValu
 }
 
 func (receiver *Client) AddManyToManyRelation(ctx context.Context, relationshipTable, id, relationshipID string, idValue, relationshipIDValue any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, args := CreateAddRelationQuery(relationshipTable, id, relationshipID, idValue, relationshipIDValue)
 
 	_, err := receiver.Database.Exec(ctx, sqlString, args)
@@ -488,9 +460,6 @@ func DeleteRelationQuery(relationshipTable, id, relationshipID string, idValue, 
 }
 
 func (receiver *Client) DeleteManyToManyRelation(ctx context.Context, relationshipTable, id, relationshipID string, idValue, relationshipIDValue any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, args := DeleteRelationQuery(relationshipTable, id, relationshipID, idValue, relationshipIDValue)
 
 	_, err := receiver.Database.Exec(ctx, sqlString, args)
@@ -511,9 +480,6 @@ func IsExistRelationQuery(relationshipTable, id, relationshipID string, idValue,
 }
 
 func (receiver *Client) ExistManyToManyRelation(ctx context.Context, relationshipTable, id, relationshipID string, idValue, relationshipIDValue any) (bool, error) {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString, args := IsExistRelationQuery(relationshipTable, id, relationshipID, idValue, relationshipIDValue)
 
 	rows, err := receiver.Database.Query(ctx, sqlString, args)
@@ -554,9 +520,6 @@ func CreateBulkInsertQuery(args pgx.NamedArgs, fieldsList []map[string]any, fiel
 }
 
 func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fieldsList []map[string]any, fieldsListList [][]string) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	args := pgx.NamedArgs{}
 
 	nameString, valueString := CreateBulkInsertQuery(args, fieldsList, fieldsListList)
@@ -571,9 +534,6 @@ func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fields
 }
 
 func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, idName string, idValue []any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	statements, args := CreateUpdateQuery(fields, fieldsList)
 
 	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s IN (@idvalue)", tableName, statements, idName)
@@ -587,9 +547,6 @@ func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields
 }
 
 func (receiver *Client) BulkDelete(ctx context.Context, tableName string, idName string, idValue []any) error {
-	receiver.Database.BeginHook()
-	defer receiver.Database.EndHook()
-
 	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE %s IN (@idvalue);", tableName, idName)
 
 	args := pgx.NamedArgs{}

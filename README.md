@@ -57,7 +57,7 @@ V0.7.0
 - [x] Index and Composite Index
 
 V0.8.0
-- [ ] Nice and beautiful Debug Mode with logger
+- [x] Nice and beautiful Debug Mode with logger
 
 V0.9.0
 - [ ] Customizable helper functions
