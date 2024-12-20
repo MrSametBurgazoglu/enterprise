@@ -4,7 +4,7 @@ import "strconv"
 
 type Float64DBField struct {
 	*Field
-	DefaultValue      int
+	DefaultValue      float64
 	DefaultFuncStruct *FuncStruct
 }
 
@@ -13,17 +13,17 @@ func (i *Float64DBField) GetDefault() string {
 		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
 		return i.DefaultFuncStruct.PackageFunc + "()"
 	} else {
-		return strconv.Itoa(i.DefaultValue)
+		return strconv.FormatFloat(i.DefaultValue, 'g', -1, 64)
 	}
 }
 
-func (i *Float64DBField) Default(v int) *Float64DBField {
+func (i *Float64DBField) Default(v float64) *Float64DBField {
 	i.DefaultValue = v
 	i.HaveDefault = true
 	return i
 }
 
-func (i *Float64DBField) DefaultFunc(v func() int) *Float64DBField {
+func (i *Float64DBField) DefaultFunc(v func() float64) *Float64DBField {
 	i.DefaultFuncStruct.DefaultFunc(v)
 	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
 	i.HaveDefault = true
