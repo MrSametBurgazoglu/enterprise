@@ -106,3 +106,5 @@ BenchmarkEnterpriseReadSingleField-4                2908            494583 ns/op
 BenchmarkGormReadSingleField-4                      2036            515719 ns/op            4738 B/op         73 allocs/op
 BenchmarkSqlxReadSingleField-4                      1242           1015917 ns/op             792 B/op         22 allocs/op
 ````
+
+For documentation visit https://mrsametburgazoglu.github.io/enterprise_docs/
