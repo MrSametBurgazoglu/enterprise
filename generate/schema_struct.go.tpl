@@ -104,8 +104,6 @@ func (t *{{$.TableName}}) SetClient(client *client.Client) {
 }
 
 
-
-
 func New{{.TableName}}List(ctx context.Context, dc client.DatabaseClient) *{{.TableName}}List{
     v := &{{.TableName}}List{client: client.NewClient(dc), ctx: ctx}
     v.relations = new(client.RelationList)
@@ -207,6 +205,15 @@ func (t *{{$.TableName}}) Parse{{.GetName}}(v string) error{
     return nil
 }
 {{end}}
+
+
+{{if and .CanUUID .IsNillable}}
+func (t *{{$.TableName}}) Get{{.GetName}}AsString() string{
+    if t.{{.GetNameLower}} == nil{
+            return ""
+    }
+    return t.{{.GetNameLower}}.String()
+}{{end}}
 {{end}}
 
 {{range .Fields}}
@@ -243,6 +250,15 @@ func (t *{{$.TableName}}) {{.GetName}}NotIN(v ...{{.GetBaseType}}) bool{ {{if .I
 func (t *{{$.TableName}}) Get{{.GetName}}() {{.GetType}}{
     return t.{{.GetNameLower}}
 }{{end}}
+
+{{range .Fields}}
+{{if .CanUseIf}}
+func (t *{{$.TableName}}) GetIf{{.GetName}}() {{.GetBaseType}}{
+    if t.{{.GetNameLower}} == nil{
+            return false
+    }
+    return *t.{{.GetNameLower}}
+}{{end}}{{end}}
 
 {{range .Fields}}
 func (t *{{$.TableName}}) Set{{.GetName}}Field(){

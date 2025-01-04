@@ -33,6 +33,7 @@ func (i *BoolDBField) DefaultFunc(v func() bool) *BoolDBField {
 func BoolField(name string) *BoolDBField {
 	f := &BoolDBField{}
 	f.Field = new(Field)
+	f.IsBool = true
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.setField(name, "bool", FieldTypeBool)
 	return f

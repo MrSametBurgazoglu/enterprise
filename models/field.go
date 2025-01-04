@@ -45,6 +45,7 @@ type Field struct {
 	HaveCustomType   bool
 	IsTime           bool
 	IsUUID           bool
+	IsBool           bool
 	CanIn            bool
 	Serial           bool
 	CustomDBType     string
@@ -127,6 +128,10 @@ func (f *Field) CanTime() bool {
 
 func (f *Field) CanUUID() bool {
 	return f.IsUUID
+}
+
+func (f *Field) CanUseIf() bool {
+	return f.IsBool && f.IsNillable()
 }
 
 func (f *Field) IsCustomType() bool {
