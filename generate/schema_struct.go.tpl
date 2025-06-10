@@ -11,7 +11,7 @@ import (
 const {{.TableName}}TableName = "{{.DBName}}"
 
 const (
-    {{range .Fields}}{{$.TableName}}{{.GetName}}Field string = "{{.GetDBName}}"
+    {{range .Fields}}{{$.TableName}}Table{{.GetName}}Field string = "{{.GetDBName}}"
     {{end}}
 )
 
@@ -36,7 +36,7 @@ func SetDatabase{{.TableName}}ListOperationHook(f func(operationInfo *client.Ope
 type {{.GetName}} string
 {{ $name := .GetName }}
 const ({{range .Values}}
-    {{$name}}{{.}}Type {{$name}} = "{{.}}"{{end}}
+    {{$name}}{{.}} {{$name}} = "{{.}}"{{end}}
 )
 {{end}}{{end}}
 
@@ -156,7 +156,7 @@ func (t *{{$.TableName}}) Set{{.GetName}}(v {{.GetType}}){
 }{{end}}
 {{range .Fields}}
 {{if .IsNillable}}
-func (t *{{$.TableName}}) Set{{.GetName}}Value(v {{.GetBaseType}}){
+func (t *{{$.TableName}}) Set{{.Name}}Value(v {{.GetBaseType}}){
    t.Set{{.GetName}}(&v)
    t.Set{{.GetName}}Field()
 }{{end}}
@@ -207,11 +207,11 @@ func (t *{{$.TableName}}) Parse{{.GetName}}(v string) error{
 {{end}}
 
 
-{{if and .CanUUID .IsNillable}}
+{{if .CanUUID}}
 func (t *{{$.TableName}}) Get{{.GetName}}AsString() string{
-    if t.{{.GetNameLower}} == nil{
+    {{if .IsNillable}}if t.{{.GetNameLower}} == nil{
             return ""
-    }
+    }{{end}}
     return t.{{.GetNameLower}}.String()
 }{{end}}
 {{end}}
@@ -262,9 +262,9 @@ func (t *{{$.TableName}}) GetIf{{.GetName}}() {{.GetBaseType}}{
 
 {{range .Fields}}
 func (t *{{$.TableName}}) Set{{.GetName}}Field(){
-    if _, exist := t.changedFields[{{$.TableName}}{{.GetName}}Field]; !exist{
-        t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
-        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}{{.GetName}}Field)
+    if _, exist := t.changedFields[{{$.TableName}}Table{{.GetName}}Field]; !exist{
+        t.changedFields[{{$.TableName}}Table{{.GetName}}Field] = t.{{.GetNameLower}}
+        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field)
     }
 
 }{{end}}
@@ -342,12 +342,12 @@ func (t *{{$.TableName}}List) clean{{.GetRelationField}}(){
 
 func (t *{{$.TableName}}) SetDefaults(){
     {{range .Fields}}{{if .IsDefault}}t.{{.GetNameLower}} = {{.GetDefault}}
-    t.changedFields[{{$.TableName}}{{.GetName}}Field] = t.{{.GetNameLower}}
-    t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}{{.GetName}}Field){{end}}
+    t.changedFields[{{$.TableName}}Table{{.GetName}}Field] = t.{{.GetNameLower}}
+    t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field){{end}}
     {{end}}
 
     {{range .Fields}}{{if .IsSerial}}{{if .IsNillable}}
-    v := &client.SelectedField{Name:{{$.TableName}}{{.GetName}}Field, Value:t.{{.GetNameLower}}}{{else}}v := &client.SelectedField{Name:{{$.TableName}}{{.GetName}}Field, Value:&t.{{.GetNameLower}}}{{end}}
+    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:t.{{.GetNameLower}}}{{else}}v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}{{end}}
     t.serialFields = append(t.serialFields, v)
     {{end}}
     {{end}}
@@ -601,7 +601,7 @@ func (t *{{$.TableName}}Result) prepare(){
 {{range .Fields}}
 func (t *{{$.TableName}}Result) Select{{.GetName}}(){
     {{if .IsNillable}}
-    v := &client.SelectedField{Name:{{$.TableName}}{{.GetName}}Field, Value:t.{{.GetNameLower}}}{{else}}v := &client.SelectedField{Name:{{$.TableName}}{{.GetName}}Field, Value:&t.{{.GetNameLower}}}{{end}}
+    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:t.{{.GetNameLower}}}{{else}}v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}{{end}}
     t.selectedFields = append(t.selectedFields, v)
 }
 {{end}}
