@@ -19,6 +19,9 @@ func (s *StringDBField) DefaultFunc(v func() string) *StringDBField {
 }
 
 func (s *StringDBField) GetDefault() string {
+	if !s.HaveDefault{
+		return "\"\""
+	}
 	if s.DefaultFuncStruct.PackageFunc != "" {
 		s.RequiredPackages = append(s.RequiredPackages, s.DefaultFuncStruct.PackageAddress)
 		return s.DefaultFuncStruct.PackageFunc + "()"

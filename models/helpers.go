@@ -14,3 +14,16 @@ func ConvertToSnakeCase(input string) string {
 	// Convert the whole string to lowercase
 	return strings.ToLower(snake)
 }
+
+func ToCamelCase(s string) string {
+	delimiters := []string{"_", "-", " "}
+	for _, d := range delimiters {
+		s = strings.ReplaceAll(s, d, " ")
+	}
+
+	words := strings.Fields(s)
+	for i, word := range words {
+		words[i] = strings.Title(word)
+	}
+	return strings.Join(words, "")
+}

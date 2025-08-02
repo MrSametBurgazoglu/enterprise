@@ -81,6 +81,7 @@ type Table struct {
 	Relations        []*Relation
 	IDColumn         FieldI
 	RequiredPackages []string
+	InternalRequiredPackages []string
 	Indexes          []Index
 }
 

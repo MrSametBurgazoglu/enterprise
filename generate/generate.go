@@ -4,11 +4,13 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"github.com/MrSametBurgazoglu/enterprise/models"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 	"text/template"
+
+	"github.com/MrSametBurgazoglu/enterprise/models"
 )
 
 //go:embed schema_struct.go.tpl
@@ -31,6 +33,7 @@ func Models(tables ...*models.Table) {
 	Clients(g)
 	Schemas(g)
 	Predicates(g)
+	exec.Command("gofmt", "-s", "-w", ".")
 }
 
 func Schemas(g *models.Generation) {
@@ -41,6 +44,12 @@ func Schemas(g *models.Generation) {
 				if !slices.Contains(table.RequiredPackages, s) {
 					table.RequiredPackages = append(table.RequiredPackages, s)
 				}
+			}
+			if field.IsCanIn(){
+				if !slices.Contains(table.InternalRequiredPackages, "slices") {
+					table.InternalRequiredPackages = append(table.InternalRequiredPackages, "slices")
+				}
+
 			}
 		}
 		buf := &bytes.Buffer{}
