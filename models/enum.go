@@ -1,11 +1,28 @@
 package models
 
+import (
+	"fmt"
+)
+
+type EnumValue struct {
+	value string
+}
+
+func (e *EnumValue) Title() string {
+	return ToCamelCase(e.value)
+}
+
+
+func (e *EnumValue) Value() string {
+	return e.value
+}
+
 type EnumDBField struct {
 	*Field
 	DefaultValue      string
 	DefaultFuncStruct *FuncStruct
 	TypeName          string
-	Values            []string
+	Values            []*EnumValue
 }
 
 func (s *EnumDBField) Default(v string) *EnumDBField {
@@ -25,7 +42,7 @@ func (s *EnumDBField) GetDefault() string {
 		s.RequiredPackages = append(s.RequiredPackages, s.DefaultFuncStruct.PackageAddress)
 		return s.DefaultFuncStruct.PackageFunc + "()"
 	} else {
-		return s.DefaultValue
+		return fmt.Sprintf("\"%s\"", s.DefaultValue)
 	}
 }
 
@@ -35,7 +52,11 @@ func EnumField(name string, values []string) *EnumDBField {
 	f.DefaultFuncStruct = new(FuncStruct)
 	f.TypeName = name
 	f.setField(name, f.TypeName, FieldTypeEnum)
-	f.Values = values
+	valuesArray := make([]*EnumValue, len(values))
+	for i, v := range values{
+		valuesArray[i] = &EnumValue{value: v}
+	}
+	f.Values = valuesArray
 	f.HaveCustomType = true
 	f.CanIn = true
 	return f

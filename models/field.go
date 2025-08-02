@@ -30,6 +30,8 @@ type FieldI interface {
 	GetCustomType() string
 	IsNillable() bool
 	IsSerial() bool
+	IsCanIn() bool
+	GetDefault() string
 }
 
 type Field struct {
@@ -144,6 +146,10 @@ func (f *Field) GetRequiredPackages() []string {
 
 func (f *Field) GetFieldType() int {
 	return f.FieldType
+}
+
+func (f *Field) GetDefault() string {
+	return ""
 }
 
 func (f *Field) setField(name, typeName string, fieldType int) {

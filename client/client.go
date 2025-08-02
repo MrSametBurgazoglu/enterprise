@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"strings"
 )
 
 type DatabaseClient interface {
@@ -19,7 +20,6 @@ type DatabaseTransactionClient interface {
 	DatabaseClient
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
-	SavePoint(ctx context.Context) (DatabaseTransactionClient, error)
 }
 
 var NotFoundError = errors.New("not found")
