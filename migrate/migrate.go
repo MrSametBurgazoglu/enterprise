@@ -1,17 +1,18 @@
 package migrate
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"net/url"
+	"os"
+
 	"ariga.io/atlas/sql/migrate"
 	"ariga.io/atlas/sql/postgres"
 	"ariga.io/atlas/sql/schema"
 	"ariga.io/atlas/sql/sqlclient"
-	"context"
-	"fmt"
 	"github.com/MrSametBurgazoglu/enterprise/models"
 	_ "github.com/lib/pq"
-	"log"
-	"net/url"
-	"os"
 )
 
 func Migrate(ctx context.Context, postgresUrl, migrationPath, planName string, tables []*models.Table) {

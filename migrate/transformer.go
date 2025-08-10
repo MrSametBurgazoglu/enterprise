@@ -21,7 +21,7 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 		for _, relation := range table.Relations {
 			symbol := fmt.Sprintf("%s_%s_fk", table.DBName, relation.OnField)
 
-			if relation.RelationType == 1 { //many to one
+			if relation.RelationType != models.RelationTypeManyToOne { //one to many and many to many is not setted here
 				continue
 			}
 			fk := schema.NewForeignKey(symbol).
