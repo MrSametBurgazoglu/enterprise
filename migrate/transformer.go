@@ -1,9 +1,10 @@
 package migrate
 
 import (
+	"fmt"
+
 	"ariga.io/atlas/sql/postgres"
 	"ariga.io/atlas/sql/schema"
-	"fmt"
 	"github.com/MrSametBurgazoglu/enterprise/models"
 )
 
@@ -18,7 +19,7 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 
 	for i, table := range tables {
 		for _, relation := range table.Relations {
-			symbol := fmt.Sprintf("%s_%s", table.DBName, relation.OnField)
+			symbol := fmt.Sprintf("%s_%s_fk", table.DBName, relation.OnField)
 
 			if relation.RelationType == 1 { //many to one
 				continue
@@ -65,8 +66,8 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 					c2,
 				}
 
-				symbol1 := fmt.Sprintf("%s_%s", relation.ManyTableDBName, table.DBName)
-				symbol2 := fmt.Sprintf("%s_%s", relation.ManyTableDBName, relation.RelationTableDBName)
+				symbol1 := fmt.Sprintf("%s_%s_fk", relation.ManyTableDBName, table.DBName)
+				symbol2 := fmt.Sprintf("%s_%s_fk", relation.ManyTableDBName, relation.RelationTableDBName)
 
 				fk1 := schema.NewForeignKey(symbol1).
 					SetTable(relationTable).
@@ -74,7 +75,7 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 					SetOnUpdate(schema.NoAction).
 					SetOnDelete(schema.NoAction).
 					AddColumns(c1).
-					AddRefColumns(&schema.Column{Name: relation.RelationField})
+					AddRefColumns(&schema.Column{Name: table.IDDBField})
 				relationTable.AddForeignKeys(fk1)
 
 				fk2 := schema.NewForeignKey(symbol2).
@@ -83,7 +84,7 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 					SetOnUpdate(schema.NoAction).
 					SetOnDelete(schema.NoAction).
 					AddColumns(c2).
-					AddRefColumns(&schema.Column{Name: relation.OnField})
+					AddRefColumns(&schema.Column{Name: relation.RelationTableField})
 				relationTable.AddForeignKeys(fk2)
 
 				dbSchema.Tables = append(dbSchema.Tables, relationTable)
@@ -103,6 +104,9 @@ func TransformTableToAtlasTable(table *models.Table) *schema.Table {
 	dbTable.SetPrimaryKey(pk)
 
 	for _, field := range table.Fields {
+		if field.GetDBName() == table.IDColumn.GetDBName() {
+			continue
+		}
 		dbTable.Columns = append(dbTable.Columns, TransformFieldToAtlasColumn(field))
 	}
 
