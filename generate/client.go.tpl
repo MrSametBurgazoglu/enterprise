@@ -31,7 +31,7 @@ type Database struct {
 }
 
 func (d *Database) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
-	commandTag, err = d.pool.Exec(ctx, sql, arguments)
+	commandTag, err = d.pool.Exec(ctx, sql, arguments[0])
 	if err != nil {
 		d.Logger.LogError(ctx, sql, arguments[0].(pgx.NamedArgs), err)
 	} else if d.Options.Debug {
@@ -41,7 +41,7 @@ func (d *Database) Exec(ctx context.Context, sql string, arguments ...any) (comm
 }
 
 func (d *Database) Query(ctx context.Context, sql string, args ...any) (rows pgx.Rows, err error) {
-	rows, err = d.pool.Query(ctx, sql, args)
+	rows, err = d.pool.Query(ctx, sql, args[0])
 	if err != nil {
 		d.Logger.LogError(ctx, sql, args[0].(pgx.NamedArgs), err)
 	} else if d.Options.Debug {
@@ -51,7 +51,7 @@ func (d *Database) Query(ctx context.Context, sql string, args ...any) (rows pgx
 }
 
 func (d *Database) QueryRow(ctx context.Context, sql string, args ...any) (row pgx.Row) {
-	row = d.pool.QueryRow(ctx, sql, args)
+	row = d.pool.QueryRow(ctx, sql, args[0])
 	if d.Options.Debug {
 		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
 	}

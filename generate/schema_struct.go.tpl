@@ -346,9 +346,12 @@ func (t *{{$.TableName}}) GetChangedFields() map[string]any{
 }
 
 func (t *{{$.TableName}}) SetDefaults(){
-    {{range .Fields}}{{if .IsDefault}}t.{{.GetNameLower}} = {{.GetDefault}}
-    t.changedFields[{{$.TableName}}Table{{.GetName}}Field] = t.{{.GetNameLower}}
-    t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field){{end}}
+    {{range .Fields}}{{if .IsDefault}}
+    if _, exist := t.changedFields[{{$.TableName}}Table{{.GetName}}Field] !exist {
+        t.{{.GetNameLower}} = {{.GetDefault}}
+        t.changedFields[{{$.TableName}}Table{{.GetName}}Field] = t.{{.GetNameLower}}
+        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field){{end}}
+    }
     {{end}}
 
     {{range .Fields}}{{if .IsSerial}}{{if .IsNillable}}
@@ -447,6 +450,7 @@ func (t *{{.TableName}}) Refresh() error{
 }
 
 func (t *{{.TableName}}) Create() error{
+    t.SetDefaults()
     return database{{.TableName}}OperationHook(
         t.ctx,
         client.NewOperationInfo(
