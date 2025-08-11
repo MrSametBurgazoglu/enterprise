@@ -347,11 +347,12 @@ func (t *{{$.TableName}}) GetChangedFields() map[string]any{
 
 func (t *{{$.TableName}}) SetDefaults(){
     {{range .Fields}}{{if .IsDefault}}
-    if _, exist := t.changedFields[{{$.TableName}}Table{{.GetName}}Field] !exist {
+    if _, exist := t.changedFields[{{$.TableName}}Table{{.GetName}}Field]; !exist {
         t.{{.GetNameLower}} = {{.GetDefault}}
         t.changedFields[{{$.TableName}}Table{{.GetName}}Field] = t.{{.GetNameLower}}
-        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field){{end}}
+        t.changedFieldsList = append(t.changedFieldsList, {{$.TableName}}Table{{.GetName}}Field)
     }
+    {{end}}
     {{end}}
 
     {{range .Fields}}{{if .IsSerial}}{{if .IsNillable}}
