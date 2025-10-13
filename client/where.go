@@ -9,8 +9,8 @@ const (
 	GTE  = "\"%s\".\"%s\" >= %s"
 	LT   = "\"%s\".\"%s\" < %s"
 	LTE  = "\"%s\".\"%s\" <= %s"
-	NIL  = "\"%s\".\"%s\" IS NIL"
-	NNIL = "\"%s\".\"%s\" IS NOT NIL"
+	NIL  = "\"%s\".\"%s\" IS NULL"
+	NNIL = "\"%s\".\"%s\" IS NOT NULL"
 	ANY  = "\"%s\".\"%s\" = ANY(%s)"
 	NANY = "\"%s\".\"%s\" != ANY(%s)"
 )
