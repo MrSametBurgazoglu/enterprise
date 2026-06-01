@@ -371,8 +371,8 @@ func (t *{{$.TableName}}) SetDefaults(){
     {{end}}
     {{end}}
 
-    {{range .Fields}}{{if .IsSerial}}{{if .IsNillable}}
-    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:t.{{.GetNameLower}}}{{else}}v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}{{end}}
+    {{range .Fields}}{{if .IsSerial}}
+    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}
     t.serialFields = append(t.serialFields, v)
     {{end}}
     {{end}}
@@ -635,7 +635,7 @@ func (t *{{$.TableName}}Result) prepare(){
 
 {{range .Fields}}
 func (t *{{$.TableName}}Result) Select{{.GetName}}(){
-    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:{{if .IsNillable}}t.{{.GetNameLower}}{{else}}&t.{{.GetNameLower}}{{end}}}
+    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}
     t.selectedFields = append(t.selectedFields, v)
 }
 {{end}}
