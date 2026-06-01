@@ -11,7 +11,7 @@ import (
 )
 
 func TestDelete(t *testing.T) {
-	expectedSQLQuery := "DELETE FROM \"account\" WHERE id = @idvalue;"
+	expectedSQLQuery := "DELETE FROM \"account\" WHERE \"id\" = @idvalue;"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

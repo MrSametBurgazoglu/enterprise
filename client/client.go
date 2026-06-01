@@ -59,10 +59,7 @@ func createTableRelationsNameAndAddresses(result Result, selectedNames []string,
 func createTableWhereSql(list []*WhereList, args pgx.NamedArgs, dbName string) []string {
 	var whereStrings []string
 	for _, item := range list {
-		res := item.Parse(dbName)
-		for i, s := range res.Names {
-			args[s] = res.Values[i]
-		}
+		res := item.Parse(dbName, args)
 		whereStrings = append(whereStrings, res.SqlString)
 	}
 	return whereStrings
@@ -75,11 +72,8 @@ func createTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []str
 		sql := rel.getJoinString(model.GetDBName())
 		sqlString += sql
 		if rel.isRelationHaveWhereClause() {
-			res := rel.parseWhere()
+			res := rel.parseWhere(args)
 			relationWhereStrings = append(relationWhereStrings, res.SqlString)
-			for i, s := range res.Names {
-				args[s] = res.Values[i]
-			}
 		}
 		a, b := createTableRelationWhereSql(rel.RelationModel, args)
 		sqlString += " " + a
@@ -109,7 +103,7 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 	summedRelationWhereStrings := strings.Join(allWhereStrings, " AND ")
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM %s %s WHERE (%s);",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s);",
 		names,
 		model.GetDBName(),
 		relationSqlString,
@@ -145,7 +139,7 @@ func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders
 	}
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM %s %s WHERE (%s %s) %s %s;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s %s) %s %s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
@@ -216,8 +210,9 @@ func (receiver *Client) Refresh(ctx context.Context, model Model, result Result,
 	}
 
 	sqlString := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE %s = @idvalue",
+		"SELECT %s FROM \"%s\" WHERE \"%s\".\"%s\" = @idvalue",
 		names,
+		model.GetDBName(),
 		model.GetDBName(),
 		idName,
 	)
@@ -241,7 +236,7 @@ func CreateInsertQuery(fields map[string]any, fieldsList []string) (string, stri
 	var values []string
 	for _, n := range fieldsList {
 		v := fields[n]
-		names = append(names, n)
+		names = append(names, fmt.Sprintf("\"%s\"", n))
 		values = append(values, "@"+n)
 		args[n] = v
 	}
@@ -259,7 +254,7 @@ func (receiver *Client) Create(ctx context.Context, tableName string, fields map
 		serialSql = "RETURNING %s"
 		var serialNames []string
 		for _, field := range serialFields {
-			serialNames = append(serialNames, field.Name)
+			serialNames = append(serialNames, fmt.Sprintf("\"%s\"", field.Name))
 			serialFieldAddresses = append(serialFieldAddresses, field.Value)
 		}
 		serialSql = fmt.Sprintf(serialSql, strings.Join(serialNames, ", "))
@@ -297,7 +292,7 @@ func CreateUpdateQuery(fields map[string]any, fieldsList []string) (string, pgx.
 func (receiver *Client) Update(ctx context.Context, tableName string, fields map[string]any, fieldslist []string, idName string, idValue any) error {
 	statements, args := CreateUpdateQuery(fields, fieldslist)
 
-	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s = @idvalue", tableName, statements, idName)
+	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE \"%s\" = @idvalue", tableName, statements, idName)
 
 	args["idvalue"] = idValue
 	_, err := receiver.Database.Exec(ctx, sqlString, args)
@@ -308,7 +303,7 @@ func (receiver *Client) Update(ctx context.Context, tableName string, fields map
 }
 
 func (receiver *Client) Delete(ctx context.Context, tableName string, idName string, idValue any) error {
-	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE %s = @idvalue;", tableName, idName)
+	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE \"%s\" = @idvalue;", tableName, idName)
 
 	args := pgx.NamedArgs{}
 	args["idvalue"] = idValue
@@ -393,17 +388,25 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 
 	selectedNames := make([]string, len(aggregate.aggregateFields))
 	for i := 0; i < len(aggregate.aggregateFields); i++ {
-		selectedNames[i] = fmt.Sprintf(aggregate.aggregateFormats[i], aggregate.aggregateFields[i])
+		field := aggregate.aggregateFields[i]
+		if !strings.Contains(field, "\"") {
+			field = fmt.Sprintf("\"%s\"", field)
+		}
+		selectedNames[i] = fmt.Sprintf(aggregate.aggregateFormats[i], field)
 	}
 
 	groupBys := make([]string, len(aggregate.groupByList))
 	for i := 0; i < len(aggregate.groupByList); i++ {
-		groupBys[i] = fmt.Sprintf("GROUP BY %s", aggregate.groupByList[i])
+		gb := aggregate.groupByList[i]
+		if !strings.Contains(gb, "\"") {
+			gb = fmt.Sprintf("\"%s\"", gb)
+		}
+		groupBys[i] = fmt.Sprintf("GROUP BY %s", gb)
 	}
 
 	names := strings.Join(selectedNames, ", ")
 	groupBy := strings.Join(groupBys, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM %s %s WHERE (%s %s) %s;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s %s) %s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
@@ -496,7 +499,7 @@ func CreateBulkInsertQuery(args pgx.NamedArgs, fieldsList []map[string]any, fiel
 	var names []string
 	var values [][]string
 	for _, n := range fieldsListList[0] {
-		names = append(names, n)
+		names = append(names, fmt.Sprintf("\"%s\"", n))
 	}
 
 	for i, fieldListItem := range fieldsListList {
@@ -536,7 +539,7 @@ func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fields
 func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, idName string, idValue []any) error {
 	statements, args := CreateUpdateQuery(fields, fieldsList)
 
-	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE %s IN (@idvalue)", tableName, statements, idName)
+	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE \"%s\" IN (@idvalue)", tableName, statements, idName)
 
 	args["idvalue"] = idValue
 	_, err := receiver.Database.Exec(ctx, sqlString, args)
@@ -547,7 +550,7 @@ func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields
 }
 
 func (receiver *Client) BulkDelete(ctx context.Context, tableName string, idName string, idValue []any) error {
-	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE %s IN (@idvalue);", tableName, idName)
+	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE \"%s\" IN (@idvalue);", tableName, idName)
 
 	args := pgx.NamedArgs{}
 	args["idvalue"] = idValue

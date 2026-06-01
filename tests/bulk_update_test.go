@@ -11,7 +11,7 @@ import (
 )
 
 func TestBulkUpdate(t *testing.T) {
-	expectedSQLQuery := "UPDATE \"account\" SET \"name\" = @name, \"surname\" = @surname WHERE id IN (@idvalue)"
+	expectedSQLQuery := "UPDATE \"account\" SET \"name\" = @name, \"surname\" = @surname WHERE \"id\" IN (@idvalue)"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

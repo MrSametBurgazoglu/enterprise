@@ -10,14 +10,14 @@ type {{$.TableName}}Predicate struct{
     where []*client.WhereList
 }
 
-func (t *{{.TableName}}Predicate) Where(w ...*client.Where){
+func (t *{{.TableName}}Predicate) Where(w ...client.PredicateI){
     t.where = nil
     wl := &client.WhereList{}
     wl.Items = append(wl.Items, w...)
     t.where = append(t.where, wl)
 }
 
-func (t *{{.TableName}}Predicate) ORWhere(w ...*client.Where){
+func (t *{{.TableName}}Predicate) ORWhere(w ...client.PredicateI){
     wl := &client.WhereList{}
     wl.Items = append(wl.Items, w...)
     t.where = append(t.where, wl)
@@ -129,7 +129,7 @@ func (t *{{$.TableName}}Predicate) GetWhereInfoString() string {
         whereAnd := ""
 		var whereAndString []string
 		for _, item := range list.Items {
-			whereAndString = append(whereAndString, item.Name)
+			whereAndString = append(whereAndString, item.GetName())
 		}
         whereAnd = strings.Join(whereAndString, "_AND_")
         whereString = append(whereString, whereAnd)

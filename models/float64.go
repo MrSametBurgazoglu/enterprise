@@ -9,9 +9,8 @@ type Float64DBField struct {
 }
 
 func (i *Float64DBField) GetDefault() string {
-	if i.DefaultFuncStruct.PackageFunc != "" {
-		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-		return i.DefaultFuncStruct.PackageFunc + "()"
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetDefault()
 	} else {
 		return strconv.FormatFloat(i.DefaultValue, 'g', -1, 64)
 	}
@@ -24,9 +23,7 @@ func (i *Float64DBField) Default(v float64) *Float64DBField {
 }
 
 func (i *Float64DBField) DefaultFunc(v func() float64) *Float64DBField {
-	i.DefaultFuncStruct.DefaultFunc(v)
-	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-	i.HaveDefault = true
+	i.Field.DefaultFunc(v)
 	return i
 }
 

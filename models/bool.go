@@ -7,9 +7,8 @@ type BoolDBField struct {
 }
 
 func (i *BoolDBField) GetDefault() string {
-	if i.DefaultFuncStruct.PackageFunc != "" {
-		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-		return i.DefaultFuncStruct.PackageFunc + "()"
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetDefault()
 	} else if i.DefaultValue {
 		return "true"
 	} else {
@@ -24,9 +23,7 @@ func (i *BoolDBField) Default(v bool) *BoolDBField {
 }
 
 func (i *BoolDBField) DefaultFunc(v func() bool) *BoolDBField {
-	i.DefaultFuncStruct.DefaultFunc(v)
-	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-	i.HaveDefault = true
+	i.Field.DefaultFunc(v)
 	return i
 }
 

@@ -13,18 +13,16 @@ func (s *StringDBField) Default(v string) *StringDBField {
 }
 
 func (s *StringDBField) DefaultFunc(v func() string) *StringDBField {
-	s.DefaultFuncStruct.DefaultFunc(v)
-	s.HaveDefault = true
+	s.Field.DefaultFunc(v)
 	return s
 }
 
 func (s *StringDBField) GetDefault() string {
-	if !s.HaveDefault{
+	if !s.HaveDefault {
 		return "\"\""
 	}
-	if s.DefaultFuncStruct.PackageFunc != "" {
-		s.RequiredPackages = append(s.RequiredPackages, s.DefaultFuncStruct.PackageAddress)
-		return s.DefaultFuncStruct.PackageFunc + "()"
+	if s.defaultFunc.IsValid() {
+		return s.Field.GetDefault()
 	} else {
 		return s.DefaultValue
 	}

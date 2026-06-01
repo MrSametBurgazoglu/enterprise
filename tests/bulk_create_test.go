@@ -11,7 +11,7 @@ import (
 )
 
 func TestBulkCreate(t *testing.T) {
-	expectedSQLQuery := "INSERT INTO \"account\" (id,name,surname) VALUES (@0id,@0name,@0surname), (@1id,@1name,@1surname);"
+	expectedSQLQuery := "INSERT INTO \"account\" (\"id\",\"name\",\"surname\") VALUES (@0id,@0name,@0surname), (@1id,@1name,@1surname);"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

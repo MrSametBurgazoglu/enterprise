@@ -6,15 +6,13 @@ type JSONDBField struct {
 }
 
 func (u *JSONDBField) DefaultFunc(v func() map[string]any) *JSONDBField {
-	u.DefaultFuncStruct.DefaultFunc(v)
-	u.HaveDefault = true
+	u.Field.DefaultFunc(v)
 	return u
 }
 
 func (u *JSONDBField) GetDefault() string {
-	if u.DefaultFuncStruct.PackageFunc != "" {
-		u.RequiredPackages = append(u.RequiredPackages, u.DefaultFuncStruct.PackageAddress)
-		return u.DefaultFuncStruct.PackageFunc + "()"
+	if u.defaultFunc.IsValid() {
+		return u.Field.GetDefault()
 	}
 	return "map[string]any"
 }

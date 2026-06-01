@@ -10,15 +10,13 @@ type UUIDDBField struct {
 }
 
 func (u *UUIDDBField) DefaultFunc(v func() uuid.UUID) *UUIDDBField {
-	u.DefaultFuncStruct.DefaultFunc(v)
-	u.HaveDefault = true
+	u.Field.DefaultFunc(v)
 	return u
 }
 
 func (u *UUIDDBField) GetDefault() string {
-	if u.DefaultFuncStruct.PackageFunc != "" {
-		u.RequiredPackages = append(u.RequiredPackages, u.DefaultFuncStruct.PackageAddress)
-		return u.DefaultFuncStruct.PackageFunc + "()"
+	if u.defaultFunc.IsValid() {
+		return u.Field.GetDefault()
 	}
 	return ""
 }

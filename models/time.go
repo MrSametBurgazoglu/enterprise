@@ -10,15 +10,13 @@ type TimeDBField struct {
 }
 
 func (t *TimeDBField) DefaultFunc(v func() time.Time) *TimeDBField {
-	t.DefaultFuncStruct.DefaultFunc(v)
-	t.HaveDefault = true
+	t.Field.DefaultFunc(v)
 	return t
 }
 
 func (t *TimeDBField) GetDefault() string {
-	if t.DefaultFuncStruct.PackageFunc != "" {
-		t.RequiredPackages = append(t.RequiredPackages, t.DefaultFuncStruct.PackageAddress)
-		return t.DefaultFuncStruct.PackageFunc + "()"
+	if t.defaultFunc.IsValid() {
+		return t.Field.GetDefault()
 	}
 	return ""
 }

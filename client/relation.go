@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type RelationJoinType string
@@ -76,14 +78,12 @@ func (r *Relation) isRelationHaveWhereClause() bool {
 	return len(r.Where) != 0
 }
 
-func (r *Relation) parseWhere() *Res {
+func (r *Relation) parseWhere(args pgx.NamedArgs) *Res {
 	res := new(Res)
 	var whereStrings []string
 	for _, list := range r.Where {
-		resp := list.Parse(r.RelationTable)
+		resp := list.Parse(r.RelationTable, args)
 		whereStrings = append(whereStrings, resp.SqlString)
-		res.Names = append(res.Names, resp.Names...)
-		res.Values = append(res.Values, resp.Values...)
 	}
 	res.SqlString = strings.Join(whereStrings, " OR ")
 	return res

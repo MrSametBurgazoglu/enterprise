@@ -346,6 +346,7 @@ func (t *{{$.TableName}}) GetChangedFields() map[string]any{
 }
 
 func (t *{{$.TableName}}) SetDefaults(){
+    t.serialFields = nil
     {{range .Fields}}{{if .IsDefault}}
     if _, exist := t.changedFields[{{$.TableName}}Table{{.GetName}}Field]; !exist {
         t.{{.GetNameLower}} = {{.GetDefault}}
@@ -619,7 +620,7 @@ func (t *{{$.TableName}}Result) prepare(){
 
 {{range .Fields}}
 func (t *{{$.TableName}}Result) Select{{.GetName}}(){
-    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:&t.{{.GetNameLower}}}
+    v := &client.SelectedField{Name:{{$.TableName}}Table{{.GetName}}Field, Value:{{if .IsNillable}}t.{{.GetNameLower}}{{else}}&t.{{.GetNameLower}}{{end}}}
     t.selectedFields = append(t.selectedFields, v)
 }
 {{end}}

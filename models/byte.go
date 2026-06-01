@@ -7,9 +7,8 @@ type ByteDBField struct {
 }
 
 func (i *ByteDBField) GetDefault() string {
-	if i.DefaultFuncStruct.PackageFunc != "" {
-		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-		return i.DefaultFuncStruct.PackageFunc + "()"
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetDefault()
 	}
 	return ""
 }
@@ -21,9 +20,7 @@ func (i *ByteDBField) Default(v []byte) *ByteDBField {
 }
 
 func (i *ByteDBField) DefaultFunc(v func() bool) *ByteDBField {
-	i.DefaultFuncStruct.DefaultFunc(v)
-	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-	i.HaveDefault = true
+	i.Field.DefaultFunc(v)
 	return i
 }
 

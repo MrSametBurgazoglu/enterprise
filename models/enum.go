@@ -32,15 +32,13 @@ func (s *EnumDBField) Default(v string) *EnumDBField {
 }
 
 func (s *EnumDBField) DefaultFunc(v func() string) *EnumDBField {
-	s.DefaultFuncStruct.DefaultFunc(v)
-	s.HaveDefault = true
+	s.Field.DefaultFunc(v)
 	return s
 }
 
 func (s *EnumDBField) GetDefault() string {
-	if s.DefaultFuncStruct.PackageFunc != "" {
-		s.RequiredPackages = append(s.RequiredPackages, s.DefaultFuncStruct.PackageAddress)
-		return s.DefaultFuncStruct.PackageFunc + "()"
+	if s.defaultFunc.IsValid() {
+		return s.Field.GetDefault()
 	} else {
 		return fmt.Sprintf("\"%s\"", s.DefaultValue)
 	}

@@ -110,3 +110,13 @@ func NewDB(options *Options) (IDatabase, error) {
 func initializeSlog(logLevel slog.Level) *slog.Logger {
 	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 }
+
+type PredicateI = client.PredicateI
+
+func Or(preds ...PredicateI) PredicateI {
+	return client.Or(preds...)
+}
+
+func And(preds ...PredicateI) PredicateI {
+	return client.And(preds...)
+}

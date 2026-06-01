@@ -11,7 +11,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	expectedSQLQuery := "INSERT INTO \"account\" (id,name,surname) VALUES (@id,@name,@surname) RETURNING serial;"
+	expectedSQLQuery := "INSERT INTO \"account\" (\"id\",\"name\",\"surname\") VALUES (@id,@name,@surname) RETURNING \"serial\";"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

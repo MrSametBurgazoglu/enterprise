@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-	expectedSQLQuery := "UPDATE \"account\" SET \"name\" = @name, \"surname\" = @surname WHERE id = @idvalue"
+	expectedSQLQuery := "UPDATE \"account\" SET \"name\" = @name, \"surname\" = @surname WHERE \"id\" = @idvalue"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

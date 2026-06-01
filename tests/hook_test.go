@@ -13,7 +13,7 @@ import (
 )
 
 func TestHook(t *testing.T) {
-	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id));"
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM \"account\" WHERE ((\"account\".\"id\" = @account__id_1));"
 	id := uuid.New()
 	ctx := context.TODO()
 	var serial uint = 5
@@ -25,10 +25,10 @@ func TestHook(t *testing.T) {
 	var operationType client.OperationType
 	var operationContext context.Context
 
-	models.SetDatabaseAccountOperationHook(func(operationInfo *client.OperationInfo, model *models.Account, operationFunc func() error) error {
+	models.SetDatabaseAccountOperationHook(func(ctx context.Context, operationInfo *client.OperationInfo, model *models.Account, operationFunc func() error) error {
 		operationStarted = true
 		operationType = operationInfo.OperationType
-		operationContext = model.GetContext()
+		operationContext = ctx
 		err := operationFunc()
 		operationEnded = true
 		return err
@@ -38,7 +38,7 @@ func TestHook(t *testing.T) {
 
 	resultRow := pgxmock.NewRows([]string{"id", "name", "surname", "deneme_id", "serial"}).AddRow(id, "name", "surname", nil, serial)
 
-	namedArgs := pgx.NamedArgs{"account__id": id}
+	namedArgs := pgx.NamedArgs{"account__id_1": id}
 	mockDB.ExpectQuery(expectedSQLQuery).
 		WithArgs(namedArgs).WillReturnRows(resultRow)
 

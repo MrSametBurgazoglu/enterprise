@@ -45,7 +45,8 @@ func TransformSchemaToAtlasSchema(schemaName string, tables []*models.Table) *sc
 				}
 				manyToManyTables[relation.ManyTableDBName] = true
 
-				primaryKey := schema.NewIntColumn("id", postgres.TypeSmallSerial)
+				primaryKey := schema.NewColumn("id")
+				primaryKey.Type = &schema.ColumnType{Type: &postgres.SerialType{T: postgres.TypeSerial}}
 
 				relationTable := &schema.Table{
 					Name: relation.ManyTableDBName,
@@ -103,7 +104,11 @@ func TransformTableToAtlasTable(table *models.Table) *schema.Table {
 	pk := schema.NewPrimaryKey(primaryKey)
 	dbTable.SetPrimaryKey(pk)
 
+	fieldNameMap := make(map[string]string)
+	fieldNameMap[table.IDColumn.GetName()] = table.IDColumn.GetDBName()
+
 	for _, field := range table.Fields {
+		fieldNameMap[field.GetName()] = field.GetDBName()
 		if field.GetDBName() == table.IDColumn.GetDBName() {
 			continue
 		}
@@ -113,7 +118,11 @@ func TransformTableToAtlasTable(table *models.Table) *schema.Table {
 	for _, index := range table.Indexes {
 		var columns []*schema.Column
 		for _, columnName := range index.Columns {
-			columns = append(columns, schema.NewColumn(columnName))
+			dbColName := columnName
+			if resolved, ok := fieldNameMap[columnName]; ok {
+				dbColName = resolved
+			}
+			columns = append(columns, schema.NewColumn(dbColName))
 		}
 		schemaIndex := schema.NewIndex(index.Name)
 		schemaIndex.AddColumns(columns...)
@@ -133,22 +142,22 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 	case models.FieldTypeSmallInt: //int16
 		t = &schema.IntegerType{T: postgres.TypeSmallInt}
 		if field.IsSerial() {
-			t = &schema.IntegerType{T: postgres.TypeSmallSerial}
+			t = &postgres.SerialType{T: postgres.TypeSmallSerial}
 		}
 	case models.FieldTypeInt: //int32
 		t = &schema.IntegerType{T: postgres.TypeInt}
 		if field.IsSerial() {
-			t = &schema.IntegerType{T: postgres.TypeSerial}
+			t = &postgres.SerialType{T: postgres.TypeSerial}
 		}
 	case models.FieldTypeBigInt: //int64
 		t = &schema.IntegerType{T: postgres.TypeBigInt}
 		if field.IsSerial() {
-			t = &schema.IntegerType{T: postgres.TypeSerial}
+			t = &postgres.SerialType{T: postgres.TypeBigSerial}
 		}
 	case models.FieldTypeUint:
-		t = &schema.IntegerType{T: postgres.TypeInt, Unsigned: true}
+		t = &schema.IntegerType{T: postgres.TypeInt}
 		if field.IsSerial() {
-			t = &schema.IntegerType{T: postgres.TypeSmallSerial}
+			t = &postgres.SerialType{T: postgres.TypeSerial}
 		}
 	case models.FieldTypeFloat32:
 		t = &schema.FloatType{T: postgres.TypeReal}
@@ -167,7 +176,11 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 	case models.FieldTypeJSON:
 		t = &schema.JSONType{T: postgres.TypeJSONB}
 	case models.FieldTypeCustom:
-		t = &schema.UnsupportedType{T: field.GetCustomType()}
+		if field.GetCustomType() == "text" {
+			t = &schema.StringType{T: "text"}
+		} else {
+			t = &schema.UnsupportedType{T: field.GetCustomType()}
+		}
 	default:
 		return nil
 	}

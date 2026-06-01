@@ -15,7 +15,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM account WHERE ((\"account\".\"id\" = @account__id));"
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM \"account\" WHERE ((\"account\".\"id\" = @account__id_1));"
 	id := uuid.New()
 	ctx := context.TODO()
 	var serial uint = 5
@@ -28,7 +28,7 @@ func TestGet(t *testing.T) {
 
 	resultRow := pgxmock.NewRows([]string{"id", "name", "surname", "deneme_id", "serial"}).AddRow(id, "name", "surname", nil, serial)
 
-	namedArgs := pgx.NamedArgs{"account__id": id}
+	namedArgs := pgx.NamedArgs{"account__id_1": id}
 	mockDB.ExpectQuery(expectedSQLQuery).
 		WithArgs(namedArgs).WillReturnRows(resultRow)
 
@@ -62,13 +62,13 @@ func TestGetWithRelations(t *testing.T) {
     "group"."name",
     "group"."surname",
     "group"."data"
-	FROM test
+	FROM "test"
 	    LEFT JOIN "deneme" ON "test"."id" = "deneme"."test_id"
 		RIGHT JOIN "account" ON "deneme"."id" = "account"."deneme_id"
 		LEFT JOIN "group" ON "account"."group_id" = "group"."account_id"
-	WHERE (("deneme"."count" = @deneme__count)
-		AND ("account"."name" = @account__name) 
-		AND ("group"."name" = @group__name));`
+	WHERE (("deneme"."count" = @deneme__count_1)
+		AND ("account"."name" = @account__name_1) 
+		AND ("group"."name" = @group__name_1));`
 
 	testID := uuid.New()
 	denemeID := uuid.New()
@@ -90,15 +90,15 @@ func TestGetWithRelations(t *testing.T) {
 
 	values := [][]any{
 		{testID, "test_name", createdAt, nil,
-			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
+			denemeID, testID, 20, true, models.DenemeTypeDeneme,
 			accountID1, "account_name", "account1_surname", denemeID, serial,
 			groupID1, "group_name", "group1_surname", map[string]any{"deneme": "value1"}},
 		{testID, "test_name", createdAt, nil,
-			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
+			denemeID, testID, 20, true, models.DenemeTypeDeneme,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
 			groupID2, "group_name", "group2_surname", map[string]any{"deneme": "value2"}},
 		{testID, "test_name", createdAt, any(v),
-			denemeID, testID, 20, true, models.DenemeTypeDenemeType,
+			denemeID, testID, 20, true, models.DenemeTypeDeneme,
 			accountID2, "account_name", "account2_surname", denemeID, serial,
 			groupID3, "group_name", "group3_surname", map[string]any{"deneme": "value3"}},
 	}
@@ -125,7 +125,7 @@ func TestGetWithRelations(t *testing.T) {
 	).
 		AddRows(values...)
 
-	namedArgs := pgx.NamedArgs{"deneme__count": 20, "account__name": "account_name", "group__name": "group_name"}
+	namedArgs := pgx.NamedArgs{"deneme__count_1": 20, "account__name_1": "account_name", "group__name_1": "group_name"}
 	mockDB.ExpectQuery(expectedSQLQuery).
 		WithArgs(namedArgs).WillReturnRows(resultRow)
 
@@ -151,7 +151,7 @@ func TestGetWithRelations(t *testing.T) {
 	assert.Equal(t, &testID, test.DenemeList.Items[0].GetTestID())
 	assert.Equal(t, 20, test.DenemeList.Items[0].GetCount())
 	assert.Equal(t, true, test.DenemeList.Items[0].GetIsActive())
-	assert.Equal(t, models.DenemeTypeDenemeType, test.DenemeList.Items[0].GetDenemeType())
+	assert.Equal(t, models.DenemeTypeDeneme, test.DenemeList.Items[0].GetDenemeType())
 
 	assert.Equal(t, accountID1, test.DenemeList.Items[0].AccountList.Items[0].GetID())
 	assert.Equal(t, "account_name", test.DenemeList.Items[0].AccountList.Items[0].GetName())
@@ -179,4 +179,34 @@ func TestGetWithRelations(t *testing.T) {
 	assert.Equal(t, "group_name", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetName())
 	assert.Equal(t, "group3_surname", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetSurname())
 	assert.Equal(t, "value3", test.DenemeList.Items[0].AccountList.Items[1].GroupList.Items[1].GetData()["deneme"])
+}
+
+func TestGetOrPredicate(t *testing.T) {
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM \"account\" WHERE (((\"account\".\"name\" = @account__name_1 OR \"account\".\"name\" = @account__name_2)) ) ;"
+	ctx := context.TODO()
+	mockDB := mock.NewMockClient()
+	defer mockDB.Close()
+
+	accountList := models.NewAccountList(ctx, mockDB)
+	accountList.Where(models.Or(
+		accountList.IsNameEqual("name1"),
+		accountList.IsNameEqual("name2"),
+	))
+
+	id1 := uuid.New()
+	id2 := uuid.New()
+	resultRow := pgxmock.NewRows([]string{"id", "name", "surname", "deneme_id", "serial"}).
+		AddRow(id1, "name1", "surname1", nil, uint(1)).
+		AddRow(id2, "name2", "surname2", nil, uint(2))
+
+	namedArgs := pgx.NamedArgs{"account__name_1": "name1", "account__name_2": "name2"}
+	mockDB.ExpectQuery(expectedSQLQuery).
+		WithArgs(namedArgs).WillReturnRows(resultRow)
+
+	err := accountList.List()
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 2, len(accountList.Items))
+	assert.Equal(t, "name1", accountList.Items[0].GetName())
+	assert.Equal(t, "name2", accountList.Items[1].GetName())
 }

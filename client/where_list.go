@@ -1,21 +1,21 @@
 package client
 
-import "fmt"
+import (
+	"github.com/jackc/pgx/v5"
+)
 
 type WhereList struct {
-	Items []*Where
+	Items []PredicateI
 }
 
-func (w *WhereList) Parse(tableName string) *Res {
+func (w *WhereList) Parse(tableName string, args pgx.NamedArgs) *Res {
 	res := new(Res)
 	var whereStrings []string
 	for _, item := range w.Items {
-		whereStrings = append(whereStrings, item.GetSqlString(tableName))
-		if !item.HasValue {
-			continue
+		s := item.Parse(tableName, args)
+		if s != "" {
+			whereStrings = append(whereStrings, s)
 		}
-		res.Values = append(res.Values, item.Value)
-		res.Names = append(res.Names, fmt.Sprintf("%s__%s", tableName, item.Name))
 	}
 	sql := withAndClause(whereStrings)
 	res.SqlString = sql

@@ -1,7 +1,13 @@
 package models
 
 import (
+	"fmt"
+	"reflect"
+	"runtime"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -35,23 +41,25 @@ type FieldI interface {
 }
 
 type Field struct {
-	FieldType        int
-	Name             string
-	DBName           string
-	Type             string
-	BaseType         string
-	Nillable         bool
-	HaveDefault      bool
-	IsPrepare        bool
-	IsGreater        bool
-	HaveCustomType   bool
-	IsTime           bool
-	IsUUID           bool
-	IsBool           bool
-	CanIn            bool
-	Serial           bool
-	CustomDBType     string
-	RequiredPackages []string
+	FieldType         int
+	Name              string
+	DBName            string
+	Type              string
+	BaseType          string
+	Nillable          bool
+	HaveDefault       bool
+	IsPrepare         bool
+	IsGreater         bool
+	HaveCustomType    bool
+	IsTime            bool
+	IsUUID            bool
+	IsBool            bool
+	CanIn             bool
+	Serial            bool
+	CustomDBType      string
+	RequiredPackages  []string
+	defaultFunc       reflect.Value
+	DefaultFuncStruct *FuncStruct
 }
 
 func (f *Field) GetName() string {
@@ -148,7 +156,60 @@ func (f *Field) GetFieldType() int {
 	return f.FieldType
 }
 
+func (f *Field) DefaultFunc(v any) {
+	val := reflect.ValueOf(v)
+	if val.Kind() != reflect.Func {
+		panic("not a function")
+	}
+	f.defaultFunc = val
+	f.DefaultFuncStruct.DefaultFunc(v)
+	f.HaveDefault = true
+}
+
 func (f *Field) GetDefault() string {
+	if f.defaultFunc.IsValid() {
+		pc := f.defaultFunc.Pointer()
+		fn := runtime.FuncForPC(pc)
+		if fn != nil {
+			fullName := fn.Name()
+			if !strings.Contains(fullName, ".func") {
+				i1 := strings.LastIndex(fullName, ".")
+				packageAddress := fullName[:i1]
+				i2 := strings.LastIndex(fullName, "/")
+				packageFunc := fullName[i2+1:]
+				if packageAddress != "" && packageAddress != "main" {
+					f.RequiredPackages = append(f.RequiredPackages, packageAddress)
+				}
+				return packageFunc + "()"
+			}
+		}
+
+		// Fallback: execute function at generation time
+		results := f.defaultFunc.Call(nil)
+		val := results[0].Interface()
+		switch f.FieldType {
+		case FieldTypeInt, FieldTypeSmallInt, FieldTypeBigInt:
+			return fmt.Sprintf("%d", val)
+		case FieldTypeUint:
+			return fmt.Sprintf("%d", val)
+		case FieldTypeFloat32, FieldTypeFloat64:
+			return fmt.Sprintf("%f", val)
+		case FieldTypeString:
+			return fmt.Sprintf("%q", val)
+		case FieldTypeBool:
+			return fmt.Sprintf("%t", val)
+		case FieldTypeUUID:
+			u := val.(uuid.UUID)
+			f.RequiredPackages = append(f.RequiredPackages, "github.com/google/uuid")
+			return fmt.Sprintf("uuid.MustParse(%q)", u.String())
+		case FieldTypeTime:
+			t := val.(time.Time)
+			f.RequiredPackages = append(f.RequiredPackages, "time")
+			return fmt.Sprintf("time.Unix(%d, %d)", t.Unix(), t.UnixNano()%1e9)
+		default:
+			return fmt.Sprintf("%v", val)
+		}
+	}
 	return ""
 }
 
@@ -158,6 +219,7 @@ func (f *Field) setField(name, typeName string, fieldType int) {
 	f.Type = typeName
 	f.BaseType = typeName
 	f.SetDBNameManually(name)
+	f.DefaultFuncStruct = new(FuncStruct)
 }
 
 func (f *Field) SetDBNameManually(name string) {

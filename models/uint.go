@@ -9,9 +9,8 @@ type UintDBField struct {
 }
 
 func (i *UintDBField) GetDefault() string {
-	if i.DefaultFuncStruct.PackageFunc != "" {
-		i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-		return i.DefaultFuncStruct.PackageFunc + "()"
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetDefault()
 	} else {
 		return strconv.Itoa(int(i.DefaultValue))
 	}
@@ -24,9 +23,7 @@ func (i *UintDBField) Default(v uint) *UintDBField {
 }
 
 func (i *UintDBField) DefaultFunc(v func() uint) *UintDBField {
-	i.DefaultFuncStruct.DefaultFunc(v)
-	i.RequiredPackages = append(i.RequiredPackages, i.DefaultFuncStruct.PackageAddress)
-	i.HaveDefault = true
+	i.Field.DefaultFunc(v)
 	return i
 }
 
