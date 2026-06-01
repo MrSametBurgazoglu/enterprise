@@ -16,8 +16,9 @@ type Aggregate struct {
 	groupByList      []string
 }
 
-func (a *Aggregate) GroupBy(tableName string) {
+func (a *Aggregate) GroupBy(tableName string) *Aggregate {
 	a.groupByList = append(a.groupByList, tableName)
+	return a
 }
 
 func (a *Aggregate) addField(field string, value any) {
@@ -25,32 +26,38 @@ func (a *Aggregate) addField(field string, value any) {
 	a.aggregateValues = append(a.aggregateValues, value)
 }
 
-func (a *Aggregate) Min(field string, value any) {
+func (a *Aggregate) Min(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateMin)
 	a.addField(field, value)
+	return a
 }
 
-func (a *Aggregate) Max(field string, value any) {
+func (a *Aggregate) Max(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateMax)
 	a.addField(field, value)
+	return a
 }
 
-func (a *Aggregate) Count(field string, value any) {
+func (a *Aggregate) Count(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateCount)
 	a.addField(field, value)
+	return a
 }
 
-func (a *Aggregate) Sum(field string, value any) {
+func (a *Aggregate) Sum(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateSum)
 	a.addField(field, value)
+	return a
 }
 
-func (a *Aggregate) Avg(field string, value any) {
+func (a *Aggregate) Avg(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateAvg)
 	a.addField(field, value)
+	return a
 }
 
-func (a *Aggregate) Field(field string, value any) {
+func (a *Aggregate) Field(field string, value any) *Aggregate {
 	a.aggregateFormats = append(a.aggregateFormats, aggregateCustom)
 	a.addField(field, value)
+	return a
 }

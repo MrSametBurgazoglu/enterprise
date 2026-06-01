@@ -84,6 +84,7 @@ func (t *Test) GetDBName() string {
 
 func (t *Test) GetSelector() *TestResult {
 	t.result.selectedFields = nil
+	t.result.SelectID()
 	return &t.result
 }
 
@@ -146,6 +147,20 @@ func (t *TestList) IsExist() bool {
 
 func (t *TestList) SetClient(client *client.Client) {
 	t.client = client
+}
+
+func (t *TestList) GetSelector() *TestResult {
+	t.result.selectedFields = nil
+	t.result.SelectID()
+	return &t.result
+}
+
+func (t *TestList) DistinctString(field string) ([]string, error) {
+	return t.client.DistinctString(t.ctx, t.where, t, field, t.order, t.paging)
+}
+
+func (t *TestList) Count() (int, error) {
+	return t.client.Count(t.ctx, t.where, t)
 }
 
 func (t *Test) SetID(v uuid.UUID) {

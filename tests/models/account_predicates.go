@@ -203,6 +203,42 @@ func (t *AccountPredicate) IsSerialNotIN(v ...uint) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     AccountTableNameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsNameILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     AccountTableNameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsSurnameLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     AccountTableSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsSurnameILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     AccountTableSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsDenemeIDNil() *client.Where {
 	return &client.Where{
 		Type: client.NIL,

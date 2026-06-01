@@ -105,7 +105,73 @@ func TestIntegration(t *testing.T) {
 	assert.Equal(t, "Test Group", fetchedG.GetName())
 	assert.Equal(t, "value", fetchedG.GetData()["key"])
 
-	// 8. Test Delete
+	// 8. Test the new ORM Gap Features
+	t.Log("Testing new ORM Gap Features (Distinct, Partial Select, LIKE/ILIKE, Empty WHERE, Count)...")
+	g1 := models.NewGroup(ctx, db)
+	g1.SetName("Group A")
+	g1.SetSurname("SurnameA")
+	g1.SetData(map[string]any{})
+	err = g1.Create()
+	assert.NoError(t, err)
+
+	g2 := models.NewGroup(ctx, db)
+	g2.SetName("Group B")
+	g2.SetSurname("surnameA")
+	g2.SetData(map[string]any{})
+	err = g2.Create()
+	assert.NoError(t, err)
+
+	g3 := models.NewGroup(ctx, db)
+	g3.SetName("Group C")
+	g3.SetSurname("OtherB")
+	g3.SetData(map[string]any{})
+	err = g3.Create()
+	assert.NoError(t, err)
+
+	// A. Empty WHERE (Unconditional List)
+	allGroups := models.NewGroupList(ctx, db)
+	err = allGroups.List()
+	assert.NoError(t, err)
+	assert.True(t, len(allGroups.Items) >= 4)
+
+	// B. Count helper
+	count, err := allGroups.Count()
+	assert.NoError(t, err)
+	assert.Equal(t, len(allGroups.Items), count)
+
+	// C. SELECT DISTINCT (and ORDER BY quoting/sorting)
+	distinctList := models.NewGroupList(ctx, db)
+	distinctList.Order("surname")
+	surnames, err := distinctList.DistinctString(models.GroupTableSurnameField)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"Group Surname", "OtherB", "SurnameA", "surnameA"}, surnames)
+
+	// D. LIKE / ILIKE predicates
+	likeList := models.NewGroupList(ctx, db)
+	likeList.Where(likeList.IsSurnameLike("Surname%"))
+	err = likeList.List()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(likeList.Items))
+
+	ilikeList := models.NewGroupList(ctx, db)
+	ilikeList.Where(ilikeList.IsSurnameILike("surname%"))
+	err = ilikeList.List()
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(ilikeList.Items))
+
+	// E. Partial Field Selection (GetSelector on List)
+	partialList := models.NewGroupList(ctx, db)
+	partialList.GetSelector().SelectSurname()
+	partialList.Where(partialList.IsSurnameILike("surname%"))
+	err = partialList.List()
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(partialList.Items))
+	for _, item := range partialList.Items {
+		assert.NotEmpty(t, item.GetSurname())
+		assert.Empty(t, item.GetName()) // Not selected, should be empty!
+	}
+
+	// 9. Test Delete
 	t.Log("Testing Delete...")
 	err = deneme.Delete()
 	assert.NoError(t, err)
@@ -114,5 +180,14 @@ func TestIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = g.Delete()
+	assert.NoError(t, err)
+
+	err = g1.Delete()
+	assert.NoError(t, err)
+
+	err = g2.Delete()
+	assert.NoError(t, err)
+
+	err = g3.Delete()
 	assert.NoError(t, err)
 }

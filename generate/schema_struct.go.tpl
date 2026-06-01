@@ -86,6 +86,7 @@ func (t *{{$.TableName}}) GetDBName() string{
 
 func (t *{{$.TableName}}) GetSelector() *{{$.TableName}}Result {
     t.result.selectedFields = nil
+    t.result.Select{{.IDField}}()
     return &t.result
 }
 
@@ -149,6 +150,20 @@ func (t *{{$.TableName}}List) IsExist() bool{
 
 func (t *{{$.TableName}}List) SetClient(client *client.Client) {
     t.client = client
+}
+
+func (t *{{$.TableName}}List) GetSelector() *{{$.TableName}}Result {
+    t.result.selectedFields = nil
+    t.result.Select{{.IDField}}()
+    return &t.result
+}
+
+func (t *{{$.TableName}}List) DistinctString(field string) ([]string, error) {
+    return t.client.DistinctString(t.ctx, t.where, t, field, t.order, t.paging)
+}
+
+func (t *{{$.TableName}}List) Count() (int, error) {
+    return t.client.Count(t.ctx, t.where, t)
 }
 
 

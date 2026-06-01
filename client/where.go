@@ -18,6 +18,8 @@ const (
 	NNIL = "\"%s\".\"%s\" IS NOT NULL"
 	ANY  = "\"%s\".\"%s\" = ANY(%s)"
 	NANY = "\"%s\".\"%s\" != ANY(%s)"
+	LIKE = "\"%s\".\"%s\" LIKE %s"
+	ILIKE = "\"%s\".\"%s\" ILIKE %s"
 )
 
 type PredicateI interface {

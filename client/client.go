@@ -98,16 +98,19 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 	}
 	if len(relationWhereStrings) > 0 {
 		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
-
 	}
-	summedRelationWhereStrings := strings.Join(allWhereStrings, " AND ")
+	
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
+	}
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s);",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
-		summedRelationWhereStrings)
+		summedWhereString)
 
 	return sqlString, selectedAddress, args
 }
@@ -122,9 +125,17 @@ func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders
 	whereStrings := createTableWhereSql(list, args, result.GetDBName())
 	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
-	summedRelationWhereStrings := ""
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
 	if len(relationWhereStrings) > 0 {
-		summedRelationWhereStrings = fmt.Sprintf(" AND %s", strings.Join(relationWhereStrings, " AND "))
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
 	}
 
 	var orderStrings []string
@@ -139,12 +150,11 @@ func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders
 	}
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s %s) %s %s;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s %s %s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
-		mainTableWhereString,
-		summedRelationWhereStrings,
+		summedWhereString,
 		orderString,
 		pagingString)
 
@@ -381,15 +391,24 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 	whereStrings := createTableWhereSql(list, args, model.GetDBName())
 	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
-	summedRelationWhereStrings := ""
+	
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
 	if len(relationWhereStrings) > 0 {
-		summedRelationWhereStrings = fmt.Sprintf(" AND %s", strings.Join(relationWhereStrings, " AND "))
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
 	}
 
 	selectedNames := make([]string, len(aggregate.aggregateFields))
 	for i := 0; i < len(aggregate.aggregateFields); i++ {
 		field := aggregate.aggregateFields[i]
-		if !strings.Contains(field, "\"") {
+		if !strings.Contains(field, "\"") && field != "*" {
 			field = fmt.Sprintf("\"%s\"", field)
 		}
 		selectedNames[i] = fmt.Sprintf(aggregate.aggregateFormats[i], field)
@@ -406,12 +425,11 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 
 	names := strings.Join(selectedNames, ", ")
 	groupBy := strings.Join(groupBys, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s WHERE (%s %s) %s;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s %s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
-		mainTableWhereString,
-		summedRelationWhereStrings,
+		summedWhereString,
 		groupBy)
 	return sqlString, args
 }
@@ -559,4 +577,98 @@ func (receiver *Client) BulkDelete(ctx context.Context, tableName string, idName
 		return err
 	}
 	return nil
+}
+
+func (receiver *Client) DistinctString(ctx context.Context, list []*WhereList, model Model, field string, orders []*Order, paging *Paging) ([]string, error) {
+	args := pgx.NamedArgs{}
+	whereStrings := createTableWhereSql(list, args, model.GetDBName())
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
+	mainTableWhereString := strings.Join(whereStrings, " OR ")
+
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
+	if len(relationWhereStrings) > 0 {
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
+	}
+
+	var orderStrings []string
+	for _, order := range orders {
+		orderStrings = append(orderStrings, order.String())
+	}
+	orderString := strings.Join(orderStrings, ", ")
+
+	pagingString := ""
+	if paging != nil {
+		pagingString = paging.String()
+	}
+
+	sqlString := fmt.Sprintf("SELECT DISTINCT \"%s\".\"%s\" FROM \"%s\" %s%s %s %s;",
+		model.GetDBName(),
+		field,
+		model.GetDBName(),
+		relationSqlString,
+		summedWhereString,
+		orderString,
+		pagingString)
+
+	rows, err := receiver.Database.Query(ctx, sqlString, args)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []string
+	for rows.Next() {
+		var val *string
+		if err := rows.Scan(&val); err != nil {
+			return nil, err
+		}
+		if val != nil {
+			result = append(result, *val)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (receiver *Client) Count(ctx context.Context, list []*WhereList, model Model) (int, error) {
+	args := pgx.NamedArgs{}
+	whereStrings := createTableWhereSql(list, args, model.GetDBName())
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
+	mainTableWhereString := strings.Join(whereStrings, " OR ")
+
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
+	if len(relationWhereStrings) > 0 {
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
+	}
+
+	sqlString := fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" %s%s;",
+		model.GetDBName(),
+		relationSqlString,
+		summedWhereString)
+
+	var count int
+	// QueryRow handles closing the underlying connection automatically
+	err := receiver.Database.QueryRow(ctx, sqlString, args).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

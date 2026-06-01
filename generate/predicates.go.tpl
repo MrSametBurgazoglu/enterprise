@@ -67,6 +67,26 @@ func (t *{{$.TableName}}Predicate) Is{{.GetName}}NotIN(v ...{{.GetBaseType}}) *c
 }
 {{end}}
 
+{{range .Fields}}{{if eq .GetBaseType "string"}}
+func (t *{{$.TableName}}Predicate) Is{{.GetName}}Like(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     {{$.TableName}}Table{{.GetName}}Field,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *{{$.TableName}}Predicate) Is{{.GetName}}ILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     {{$.TableName}}Table{{.GetName}}Field,
+		HasValue: true,
+		Value:    v,
+	}
+}
+{{end}}{{end}}
+
 {{range .Fields}}
 {{if .IsNillable}}
 func (t *{{$.TableName}}Predicate) Is{{.GetName}}Nil() *client.Where{

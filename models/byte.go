@@ -19,7 +19,7 @@ func (i *ByteDBField) Default(v []byte) *ByteDBField {
 	return i
 }
 
-func (i *ByteDBField) DefaultFunc(v func() bool) *ByteDBField {
+func (i *ByteDBField) DefaultFunc(v func() []byte) *ByteDBField {
 	i.Field.DefaultFunc(v)
 	return i
 }

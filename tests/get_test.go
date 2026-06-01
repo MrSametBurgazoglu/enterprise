@@ -182,7 +182,7 @@ func TestGetWithRelations(t *testing.T) {
 }
 
 func TestGetOrPredicate(t *testing.T) {
-	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM \"account\" WHERE (((\"account\".\"name\" = @account__name_1 OR \"account\".\"name\" = @account__name_2)) ) ;"
+	expectedSQLQuery := "SELECT \"account\".\"id\", \"account\".\"name\", \"account\".\"surname\", \"account\".\"deneme_id\", \"account\".\"serial\" FROM \"account\" WHERE (((\"account\".\"name\" = @account__name_1 OR \"account\".\"name\" = @account__name_2))) ;"
 	ctx := context.TODO()
 	mockDB := mock.NewMockClient()
 	defer mockDB.Close()

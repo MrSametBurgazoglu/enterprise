@@ -169,6 +169,24 @@ func (t *TestPredicate) IsInfoNotIN(v ...custom_data_type.Custom) *client.Where 
 	}
 }
 
+func (t *TestPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     TestTableNameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *TestPredicate) IsNameILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     TestTableNameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *TestPredicate) IsInfoNil() *client.Where {
 	return &client.Where{
 		Type: client.NIL,

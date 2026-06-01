@@ -149,6 +149,9 @@ func (f *Field) IsCustomType() bool {
 }
 
 func (f *Field) GetRequiredPackages() []string {
+	if f.defaultFunc.IsValid() {
+		f.GetDefault()
+	}
 	return f.RequiredPackages
 }
 
