@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/MrSametBurgazoglu/enterprise/client"
 	"github.com/MrSametBurgazoglu/enterprise/migrate"
 	"github.com/MrSametBurgazoglu/enterprise/tests/db_models"
 	"github.com/MrSametBurgazoglu/enterprise/tests/models"
@@ -171,8 +172,101 @@ func TestIntegration(t *testing.T) {
 		assert.Empty(t, item.GetName()) // Not selected, should be empty!
 	}
 
+	// F. Test Aggregates on DenemeList
+	t.Log("Testing Aggregates on DenemeList...")
+	denemeList := models.NewDenemeList(ctx, db)
+	denemeList.Where(models.Or(
+		denemeList.IsCountEqual(100),
+		denemeList.IsCountEqual(200),
+	))
+
+	minCount, err := denemeList.MinCount()
+	assert.NoError(t, err)
+	assert.Equal(t, 100, minCount)
+
+	maxCount, err := denemeList.MaxCount()
+	assert.NoError(t, err)
+	assert.Equal(t, 200, maxCount)
+
+	sumCount, err := denemeList.SumCount()
+	assert.NoError(t, err)
+	assert.Equal(t, 300, sumCount)
+
+	avgCount, err := denemeList.AvgCount()
+	assert.NoError(t, err)
+	assert.Equal(t, 150.0, avgCount)
+
+	// G. Test Block-Based Transactions (Commit)
+	t.Log("Testing Transaction block commit...")
+	var txDenemeID uuid.UUID
+	err = db.Transaction(ctx, func(tx client.DatabaseTransactionClient) error {
+		txDeneme := models.NewDeneme(ctx, tx)
+		txDeneme.SetCount(500)
+		txDeneme.SetDenemeType(models.DenemeTypeDeneme)
+		if err := txDeneme.Create(); err != nil {
+			return err
+		}
+		txDenemeID = txDeneme.GetID()
+		return nil
+	})
+	assert.NoError(t, err)
+
+	// Verify it exists in db
+	txFetched := models.NewDeneme(ctx, db)
+	txFetched.Where(txFetched.IsIDEqual(txDenemeID))
+	err = txFetched.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 500, txFetched.GetCount())
+
+	// G2. Test Block-Based Transactions (Rollback on Error)
+	t.Log("Testing Transaction block rollback on error...")
+	var txDenemeID2 uuid.UUID
+	err = db.Transaction(ctx, func(tx client.DatabaseTransactionClient) error {
+		txDeneme := models.NewDeneme(ctx, tx)
+		txDeneme.SetCount(600)
+		txDeneme.SetDenemeType(models.DenemeTypeDeneme)
+		if err := txDeneme.Create(); err != nil {
+			return err
+		}
+		txDenemeID2 = txDeneme.GetID()
+		return assert.AnError // Return an error to trigger rollback
+	})
+	assert.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+
+	// Verify it does NOT exist in db
+	txFetched2 := models.NewDeneme(ctx, db)
+	txFetched2.Where(txFetched2.IsIDEqual(txDenemeID2))
+	err = txFetched2.Get()
+	assert.Error(t, err) // Should fail to find the row
+
+	// G3. Test Block-Based Transactions (Rollback on Panic)
+	t.Log("Testing Transaction block rollback on panic...")
+	var txDenemeID3 uuid.UUID
+	assert.Panics(t, func() {
+		_ = db.Transaction(ctx, func(tx client.DatabaseTransactionClient) error {
+			txDeneme := models.NewDeneme(ctx, tx)
+			txDeneme.SetCount(700)
+			txDeneme.SetDenemeType(models.DenemeTypeDeneme)
+			if err := txDeneme.Create(); err != nil {
+				return err
+			}
+			txDenemeID3 = txDeneme.GetID()
+			panic("something went wrong inside transaction")
+		})
+	})
+
+	// Verify it does NOT exist in db
+	txFetched3 := models.NewDeneme(ctx, db)
+	txFetched3.Where(txFetched3.IsIDEqual(txDenemeID3))
+	err = txFetched3.Get()
+	assert.Error(t, err) // Should fail to find the row
+
 	// 9. Test Delete
 	t.Log("Testing Delete...")
+	err = txFetched.Delete()
+	assert.NoError(t, err)
+
 	err = deneme.Delete()
 	assert.NoError(t, err)
 

@@ -20,6 +20,7 @@ type Options struct {
 
 type IDatabase interface {
 	NewTransaction(ctx context.Context, options ...pgx.TxOptions) (client.DatabaseTransactionClient, error)
+	Transaction(ctx context.Context, fn func(tx client.DatabaseTransactionClient) error, options ...pgx.TxOptions) error
 	Exit()
 	client.DatabaseClient
 }
@@ -84,6 +85,28 @@ func (d *Database) NewTransaction(ctx context.Context, options ...pgx.TxOptions)
 	}
 
 	return &Transaction{Tx: tx}, nil
+}
+
+func (d *Database) Transaction(ctx context.Context, fn func(tx client.DatabaseTransactionClient) error, options ...pgx.TxOptions) error {
+	tx, err := d.NewTransaction(ctx, options...)
+	if err != nil {
+		return err
+	}
+	var shouldRollback bool = true
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		} else if shouldRollback {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+	err = fn(tx)
+	if err != nil {
+		return err
+	}
+	shouldRollback = false
+	return tx.Commit(ctx)
 }
 
 func (d *Database) Exit() {

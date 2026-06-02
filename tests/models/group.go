@@ -161,6 +161,54 @@ func (t *GroupList) Count() (int, error) {
 	return t.client.Count(t.ctx, t.where, t)
 }
 
+func (t *GroupList) MinName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(GroupTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) MaxName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(GroupTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) MinSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(GroupTableSurnameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) MaxSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(GroupTableSurnameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Group) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()

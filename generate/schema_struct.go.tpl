@@ -166,6 +166,58 @@ func (t *{{$.TableName}}List) Count() (int, error) {
     return t.client.Count(t.ctx, t.where, t)
 }
 
+{{range .Fields}}{{if .IsComparable}}
+func (t *{{$.TableName}}List) Min{{.GetName}}() ({{.GetType}}, error) {
+    var val {{.GetType}}
+    a := new(client.Aggregate)
+    a.Min({{$.TableName}}Table{{.GetName}}Field, &val)
+    scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+    if err != nil {
+        return val, err
+    }
+    err = scanFunc()
+    return val, err
+}
+
+func (t *{{$.TableName}}List) Max{{.GetName}}() ({{.GetType}}, error) {
+    var val {{.GetType}}
+    a := new(client.Aggregate)
+    a.Max({{$.TableName}}Table{{.GetName}}Field, &val)
+    scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+    if err != nil {
+        return val, err
+    }
+    err = scanFunc()
+    return val, err
+}
+{{end}}{{end}}
+
+{{range .Fields}}{{if .IsNumeric}}
+func (t *{{$.TableName}}List) Sum{{.GetName}}() ({{.GetType}}, error) {
+    var val {{.GetType}}
+    a := new(client.Aggregate)
+    a.Sum({{$.TableName}}Table{{.GetName}}Field, &val)
+    scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+    if err != nil {
+        return val, err
+    }
+    err = scanFunc()
+    return val, err
+}
+
+func (t *{{$.TableName}}List) Avg{{.GetName}}() (float64, error) {
+    var val float64
+    a := new(client.Aggregate)
+    a.Avg({{$.TableName}}Table{{.GetName}}Field, &val)
+    scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+    if err != nil {
+        return val, err
+    }
+    err = scanFunc()
+    return val, err
+}
+{{end}}{{end}}
+
 
 {{range .Fields}}
 func (t *{{$.TableName}}) Set{{.GetName}}(v {{.GetType}}){

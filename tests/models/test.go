@@ -163,6 +163,54 @@ func (t *TestList) Count() (int, error) {
 	return t.client.Count(t.ctx, t.where, t)
 }
 
+func (t *TestList) MinName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(TestTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) MaxName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(TestTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) MinCreatedAt() (time.Time, error) {
+	var val time.Time
+	a := new(client.Aggregate)
+	a.Min(TestTableCreatedAtField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) MaxCreatedAt() (time.Time, error) {
+	var val time.Time
+	a := new(client.Aggregate)
+	a.Max(TestTableCreatedAtField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Test) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -650,7 +698,7 @@ func (t *TestResult) SelectCreatedAt() {
 }
 
 func (t *TestResult) SelectInfo() {
-	v := &client.SelectedField{Name: TestTableInfoField, Value: t.info}
+	v := &client.SelectedField{Name: TestTableInfoField, Value: &t.info}
 	t.selectedFields = append(t.selectedFields, v)
 }
 

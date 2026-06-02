@@ -165,6 +165,102 @@ func (t *AccountList) Count() (int, error) {
 	return t.client.Count(t.ctx, t.where, t)
 }
 
+func (t *AccountList) MinName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(AccountTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MaxName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(AccountTableNameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MinSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(AccountTableSurnameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MaxSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(AccountTableSurnameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MinSerial() (uint, error) {
+	var val uint
+	a := new(client.Aggregate)
+	a.Min(AccountTableSerialField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MaxSerial() (uint, error) {
+	var val uint
+	a := new(client.Aggregate)
+	a.Max(AccountTableSerialField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) SumSerial() (uint, error) {
+	var val uint
+	a := new(client.Aggregate)
+	a.Sum(AccountTableSerialField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) AvgSerial() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.Avg(AccountTableSerialField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Account) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -777,7 +873,7 @@ func (t *AccountResult) SelectSurname() {
 }
 
 func (t *AccountResult) SelectDenemeID() {
-	v := &client.SelectedField{Name: AccountTableDenemeIDField, Value: t.denemeid}
+	v := &client.SelectedField{Name: AccountTableDenemeIDField, Value: &t.denemeid}
 	t.selectedFields = append(t.selectedFields, v)
 }
 

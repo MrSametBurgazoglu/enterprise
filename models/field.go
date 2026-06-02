@@ -38,6 +38,8 @@ type FieldI interface {
 	IsSerial() bool
 	IsCanIn() bool
 	GetDefault() string
+	IsNumeric() bool
+	IsComparable() bool
 }
 
 type Field struct {
@@ -146,6 +148,21 @@ func (f *Field) CanUseIf() bool {
 
 func (f *Field) IsCustomType() bool {
 	return f.HaveCustomType
+}
+
+func (f *Field) IsNumeric() bool {
+	return f.FieldType == FieldTypeInt ||
+		f.FieldType == FieldTypeSmallInt ||
+		f.FieldType == FieldTypeBigInt ||
+		f.FieldType == FieldTypeFloat32 ||
+		f.FieldType == FieldTypeFloat64 ||
+		f.FieldType == FieldTypeUint
+}
+
+func (f *Field) IsComparable() bool {
+	return f.IsNumeric() ||
+		f.FieldType == FieldTypeString ||
+		f.FieldType == FieldTypeTime
 }
 
 func (f *Field) GetRequiredPackages() []string {

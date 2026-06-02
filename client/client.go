@@ -195,6 +195,7 @@ func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model,
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	err = ScanFirstRow(rows, model, selectedAddress)
 	if err != nil {
@@ -231,6 +232,7 @@ func (receiver *Client) Refresh(ctx context.Context, model Model, result Result,
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	err = ScanFirstRow(rows, model, selectedAddresses)
 	if err != nil {
@@ -360,6 +362,7 @@ func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	err = ScanListFirstRow(rows, model, selectedAddress)
 	if err != nil {
@@ -375,6 +378,7 @@ func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model
 }
 
 func ScanValues(rows pgx.Rows, selectedAddress []any) error {
+	defer rows.Close()
 	if err := rows.Err(); err != nil {
 		return err
 	}
@@ -507,6 +511,7 @@ func (receiver *Client) ExistManyToManyRelation(ctx context.Context, relationshi
 	if err != nil {
 		return false, err
 	}
+	defer rows.Close()
 	if rows.Next() {
 		return true, nil
 	}

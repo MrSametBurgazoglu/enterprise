@@ -172,6 +172,54 @@ func (t *DenemeList) Count() (int, error) {
 	return t.client.Count(t.ctx, t.where, t)
 }
 
+func (t *DenemeList) MinCount() (int, error) {
+	var val int
+	a := new(client.Aggregate)
+	a.Min(DenemeTableCountField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *DenemeList) MaxCount() (int, error) {
+	var val int
+	a := new(client.Aggregate)
+	a.Max(DenemeTableCountField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *DenemeList) SumCount() (int, error) {
+	var val int
+	a := new(client.Aggregate)
+	a.Sum(DenemeTableCountField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *DenemeList) AvgCount() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.Avg(DenemeTableCountField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Deneme) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -768,7 +816,7 @@ func (t *DenemeResult) SelectID() {
 }
 
 func (t *DenemeResult) SelectTestID() {
-	v := &client.SelectedField{Name: DenemeTableTestIDField, Value: t.testid}
+	v := &client.SelectedField{Name: DenemeTableTestIDField, Value: &t.testid}
 	t.selectedFields = append(t.selectedFields, v)
 }
 
