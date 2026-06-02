@@ -303,14 +303,26 @@ func (t *Test) NameNotIN(v ...string) bool {
 func (t *Test) GetID() uuid.UUID {
 	return t.id
 }
+
 func (t *Test) GetName() string {
 	return t.name
 }
+
 func (t *Test) GetCreatedAt() time.Time {
 	return t.createdat
 }
+
 func (t *Test) GetInfo() *custom_data_type.Custom {
 	return t.info
+}
+
+func (t *Test) GetInfoValue() custom_data_type.Custom {
+	if t.info == nil {
+		var zero custom_data_type.Custom
+		return zero
+
+	}
+	return *t.info
 }
 
 func (t *Test) SetIDField() {

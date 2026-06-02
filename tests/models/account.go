@@ -386,15 +386,28 @@ func (t *Account) SerialNotIN(v ...uint) bool {
 func (t *Account) GetID() uuid.UUID {
 	return t.id
 }
+
 func (t *Account) GetName() string {
 	return t.name
 }
+
 func (t *Account) GetSurname() string {
 	return t.surname
 }
+
 func (t *Account) GetDenemeID() *uuid.UUID {
 	return t.denemeid
 }
+
+func (t *Account) GetDenemeIDValue() uuid.UUID {
+	if t.denemeid == nil {
+		var zero uuid.UUID
+		return zero
+
+	}
+	return *t.denemeid
+}
+
 func (t *Account) GetSerial() uint {
 	return t.serial
 }

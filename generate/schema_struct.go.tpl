@@ -317,7 +317,22 @@ func (t *{{$.TableName}}) {{.GetName}}NotIN(v ...{{.GetBaseType}}) bool{ {{if .I
 {{range .Fields}}
 func (t *{{$.TableName}}) Get{{.GetName}}() {{.GetType}}{
     return t.{{.GetNameLower}}
-}{{end}}
+}
+
+{{if .IsNillable}}
+func (t *{{$.TableName}}) Get{{.GetName}}Value() {{.GetBaseType}}{
+    if t.{{.GetNameLower}} == nil{
+        {{if eq .GetBaseType "string"}}return ""
+        {{else if eq .GetBaseType "bool"}}return false
+        {{else if .IsNumeric}}return 0
+        {{else}}var zero {{.GetBaseType}}
+        return zero
+        {{end}}
+    }
+    return *t.{{.GetNameLower}}
+}
+{{end}}
+{{end}}
 
 {{range .Fields}}
 {{if .CanUseIf}}

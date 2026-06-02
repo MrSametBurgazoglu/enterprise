@@ -298,12 +298,15 @@ func (t *Group) SurnameNotIN(v ...string) bool {
 func (t *Group) GetID() uuid.UUID {
 	return t.id
 }
+
 func (t *Group) GetName() string {
 	return t.name
 }
+
 func (t *Group) GetSurname() string {
 	return t.surname
 }
+
 func (t *Group) GetData() map[string]any {
 	return t.data
 }

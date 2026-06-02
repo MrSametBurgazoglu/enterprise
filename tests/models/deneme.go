@@ -337,15 +337,28 @@ func (t *Deneme) DenemeTypeNotIN(v ...DenemeType) bool {
 func (t *Deneme) GetID() uuid.UUID {
 	return t.id
 }
+
 func (t *Deneme) GetTestID() *uuid.UUID {
 	return t.testid
 }
+
+func (t *Deneme) GetTestIDValue() uuid.UUID {
+	if t.testid == nil {
+		var zero uuid.UUID
+		return zero
+
+	}
+	return *t.testid
+}
+
 func (t *Deneme) GetCount() int {
 	return t.count
 }
+
 func (t *Deneme) GetIsActive() bool {
 	return t.isactive
 }
+
 func (t *Deneme) GetDenemeType() DenemeType {
 	return t.denemetype
 }
