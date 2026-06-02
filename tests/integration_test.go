@@ -61,6 +61,20 @@ func TestIntegration(t *testing.T) {
 	assert.Equal(t, 42, fetched.GetCount())
 	assert.Equal(t, models.DenemeTypeDeneme, fetched.GetDenemeType())
 
+	// 4a. Test IsTestIDNil and IsTestIDNotNil predicates
+	t.Log("Testing IsTestIDNil/IsTestIDNotNil predicates...")
+	fetchedNil := models.NewDeneme(ctx, db)
+	fetchedNil.Where(fetchedNil.IsIDEqual(deneme.GetID()), fetchedNil.IsTestIDNil())
+	err = fetchedNil.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 42, fetchedNil.GetCount())
+	assert.Equal(t, &uuid.Nil, fetchedNil.GetTestID())
+
+	fetchedNotNil := models.NewDeneme(ctx, db)
+	fetchedNotNil.Where(fetchedNotNil.IsIDEqual(deneme.GetID()), fetchedNotNil.IsTestIDNotNil())
+	err = fetchedNotNil.Get()
+	assert.Error(t, err) // Should not find because TestID is nil
+
 	// 5. Test Update and Get again
 	t.Log("Testing Update...")
 	fetched.SetCount(100)

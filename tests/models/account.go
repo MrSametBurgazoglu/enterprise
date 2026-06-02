@@ -873,7 +873,7 @@ func (t *AccountResult) SelectSurname() {
 }
 
 func (t *AccountResult) SelectDenemeID() {
-	v := &client.SelectedField{Name: AccountTableDenemeIDField, Value: &t.denemeid}
+	v := &client.SelectedField{Name: AccountTableDenemeIDField, Value: t.denemeid}
 	t.selectedFields = append(t.selectedFields, v)
 }
 

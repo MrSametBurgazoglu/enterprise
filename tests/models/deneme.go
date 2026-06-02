@@ -816,7 +816,7 @@ func (t *DenemeResult) SelectID() {
 }
 
 func (t *DenemeResult) SelectTestID() {
-	v := &client.SelectedField{Name: DenemeTableTestIDField, Value: &t.testid}
+	v := &client.SelectedField{Name: DenemeTableTestIDField, Value: t.testid}
 	t.selectedFields = append(t.selectedFields, v)
 }
 
