@@ -710,7 +710,7 @@ func (t *TestResult) SelectCreatedAt() {
 }
 
 func (t *TestResult) SelectInfo() {
-	v := &client.SelectedField{Name: TestTableInfoField, Value: t.info}
+	v := &client.SelectedField{Name: TestTableInfoField, Value: &t.info}
 	t.selectedFields = append(t.selectedFields, v)
 }
 

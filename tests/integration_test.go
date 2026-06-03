@@ -68,7 +68,7 @@ func TestIntegration(t *testing.T) {
 	err = fetchedNil.Get()
 	assert.NoError(t, err)
 	assert.Equal(t, 42, fetchedNil.GetCount())
-	assert.Equal(t, &uuid.Nil, fetchedNil.GetTestID())
+	assert.Nil(t, fetchedNil.GetTestID())
 	assert.Equal(t, uuid.Nil, fetchedNil.GetTestIDValue())
 
 	fetchedNotNil := models.NewDeneme(ctx, db)
