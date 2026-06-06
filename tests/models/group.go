@@ -534,6 +534,16 @@ func (t *Group) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Group) WhereIf(cond bool, w client.PredicateI) *Group {
+	t.GroupPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Group) WhereIn(cond bool, w client.PredicateI) *Group {
+	t.GroupPredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *Group) Get() error {
 	return databaseGroupOperationHook(
 		t.ctx,
@@ -617,6 +627,29 @@ func (t *GroupList) List() error {
 			return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
 		},
 	)
+}
+
+func (t *GroupList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *GroupList) WhereIf(cond bool, w client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *GroupList) WhereIn(cond bool, w client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIn(cond, w)
+	return t
 }
 
 func (t *GroupList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {

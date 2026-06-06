@@ -23,6 +23,26 @@ func (t *DenemePredicate) ORWhere(w ...client.PredicateI) {
 	t.where = append(t.where, wl)
 }
 
+func (t *DenemePredicate) WhereIf(cond bool, w client.PredicateI) *DenemePredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *DenemePredicate) WhereIn(cond bool, w client.PredicateI) *DenemePredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
 func (t *DenemePredicate) IsIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,

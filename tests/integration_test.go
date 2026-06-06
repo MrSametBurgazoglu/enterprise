@@ -277,6 +277,44 @@ func TestIntegration(t *testing.T) {
 	err = txFetched3.Get()
 	assert.Error(t, err) // Should fail to find the row
 
+	// 8b. Test new ORM features (ListWithTotal, WhereIf/WhereIn, Zero Predicates, Expression aggregates)
+	t.Log("Testing new ORM Features...")
+
+	// Test Zero Predicates (no-op WHERE)
+	zeroPredList := models.NewGroupList(ctx, db)
+	zeroPredList.Where()
+	err = zeroPredList.List()
+	assert.NoError(t, err)
+
+	// Test WhereIf / WhereIn
+	condList := models.NewGroupList(ctx, db)
+	condList.WhereIf(false, condList.IsNameEqual("nonexistent"))
+	condList.WhereIf(true, condList.IsNameEqual("Group A"))
+	err = condList.List()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(condList.Items))
+	assert.Equal(t, "Group A", condList.Items[0].GetName())
+
+	// Test ListWithTotal
+	totalList := models.NewGroupList(ctx, db)
+	totalList.Where(totalList.IsSurnameILike("surname%"))
+	total, err := totalList.ListWithTotal(0, 1)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, total) // SurnameA and surnameA
+	assert.Equal(t, 1, len(totalList.Items))
+
+	// Test Expression Aggregate with GroupBy
+	exprList := models.NewGroupList(ctx, db)
+	var countVal int
+	scanFunc, err := exprList.Aggregate(func(a *client.Aggregate) {
+		a.Count("COALESCE(name, 'default')", &countVal)
+		a.GroupBy("COALESCE(name, 'default')")
+	})
+	assert.NoError(t, err)
+	err = scanFunc()
+	assert.NoError(t, err)
+	assert.True(t, countVal > 0)
+
 	// 9. Test Delete
 	t.Log("Testing Delete...")
 	err = txFetched.Delete()

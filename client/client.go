@@ -60,7 +60,9 @@ func createTableWhereSql(list []*WhereList, args pgx.NamedArgs, dbName string) [
 	var whereStrings []string
 	for _, item := range list {
 		res := item.Parse(dbName, args)
-		whereStrings = append(whereStrings, res.SqlString)
+		if res.SqlString != "" {
+			whereStrings = append(whereStrings, res.SqlString)
+		}
 	}
 	return whereStrings
 }
@@ -410,7 +412,7 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 	selectedNames := make([]string, len(aggregate.aggregateFields))
 	for i := 0; i < len(aggregate.aggregateFields); i++ {
 		field := aggregate.aggregateFields[i]
-		if !strings.Contains(field, "\"") && field != "*" {
+		if !strings.Contains(field, "\"") && field != "*" && !strings.ContainsAny(field, "() ,") {
 			field = fmt.Sprintf("\"%s\"", field)
 		}
 		selectedNames[i] = fmt.Sprintf(aggregate.aggregateFormats[i], field)
@@ -419,7 +421,7 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 	groupBys := make([]string, len(aggregate.groupByList))
 	for i := 0; i < len(aggregate.groupByList); i++ {
 		gb := aggregate.groupByList[i]
-		if !strings.Contains(gb, "\"") {
+		if !strings.Contains(gb, "\"") && !strings.ContainsAny(gb, "() ,") {
 			gb = fmt.Sprintf("\"%s\"", gb)
 		}
 		groupBys[i] = fmt.Sprintf("GROUP BY %s", gb)

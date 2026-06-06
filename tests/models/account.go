@@ -810,6 +810,16 @@ func (t *Account) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Account) WhereIf(cond bool, w client.PredicateI) *Account {
+	t.AccountPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Account) WhereIn(cond bool, w client.PredicateI) *Account {
+	t.AccountPredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *Account) Get() error {
 	return databaseAccountOperationHook(
 		t.ctx,
@@ -893,6 +903,29 @@ func (t *AccountList) List() error {
 			return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
 		},
 	)
+}
+
+func (t *AccountList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *AccountList) WhereIf(cond bool, w client.PredicateI) *AccountList {
+	t.AccountPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *AccountList) WhereIn(cond bool, w client.PredicateI) *AccountList {
+	t.AccountPredicate.WhereIn(cond, w)
+	return t
 }
 
 func (t *AccountList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {

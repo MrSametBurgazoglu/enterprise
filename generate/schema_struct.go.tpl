@@ -505,6 +505,16 @@ func (t *{{.TableName}}) GetContext() context.Context{
     return t.ctx
 }
 
+func (t *{{.TableName}}) WhereIf(cond bool, w client.PredicateI) *{{.TableName}} {
+	t.{{.TableName}}Predicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *{{.TableName}}) WhereIn(cond bool, w client.PredicateI) *{{.TableName}} {
+	t.{{.TableName}}Predicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *{{.TableName}}) Get() error{
     return database{{.TableName}}OperationHook(
         t.ctx,
@@ -588,6 +598,29 @@ func (t *{{.TableName}}List) List() error{
             return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
         },
     )
+}
+
+func (t *{{.TableName}}List) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *{{.TableName}}List) WhereIf(cond bool, w client.PredicateI) *{{.TableName}}List {
+	t.{{.TableName}}Predicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *{{.TableName}}List) WhereIn(cond bool, w client.PredicateI) *{{.TableName}}List {
+	t.{{.TableName}}Predicate.WhereIn(cond, w)
+	return t
 }
 
 func (t *{{.TableName}}List) Aggregate(f func (aggregate *client.Aggregate)) (func() error,error){

@@ -23,6 +23,26 @@ func (t *{{.TableName}}Predicate) ORWhere(w ...client.PredicateI){
     t.where = append(t.where, wl)
 }
 
+func (t *{{$.TableName}}Predicate) WhereIf(cond bool, w client.PredicateI) *{{$.TableName}}Predicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *{{$.TableName}}Predicate) WhereIn(cond bool, w client.PredicateI) *{{$.TableName}}Predicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
 {{range .Fields}}
 func (t *{{$.TableName}}Predicate) Is{{.GetName}}Equal(v {{.GetBaseType}}) *client.Where{
     return &client.Where{

@@ -625,6 +625,16 @@ func (t *Deneme) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Deneme) WhereIf(cond bool, w client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Deneme) WhereIn(cond bool, w client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *Deneme) Get() error {
 	return databaseDenemeOperationHook(
 		t.ctx,
@@ -708,6 +718,29 @@ func (t *DenemeList) List() error {
 			return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
 		},
 	)
+}
+
+func (t *DenemeList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *DenemeList) WhereIf(cond bool, w client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *DenemeList) WhereIn(cond bool, w client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIn(cond, w)
+	return t
 }
 
 func (t *DenemeList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {

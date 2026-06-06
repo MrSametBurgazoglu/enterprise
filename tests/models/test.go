@@ -642,6 +642,16 @@ func (t *Test) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Test) WhereIf(cond bool, w client.PredicateI) *Test {
+	t.TestPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Test) WhereIn(cond bool, w client.PredicateI) *Test {
+	t.TestPredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *Test) Get() error {
 	return databaseTestOperationHook(
 		t.ctx,
@@ -725,6 +735,29 @@ func (t *TestList) List() error {
 			return t.client.List(t.ctx, t.where, t, &t.result, t.order, t.paging)
 		},
 	)
+}
+
+func (t *TestList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *TestList) WhereIf(cond bool, w client.PredicateI) *TestList {
+	t.TestPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *TestList) WhereIn(cond bool, w client.PredicateI) *TestList {
+	t.TestPredicate.WhereIn(cond, w)
+	return t
 }
 
 func (t *TestList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {

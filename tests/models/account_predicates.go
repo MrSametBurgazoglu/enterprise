@@ -23,6 +23,26 @@ func (t *AccountPredicate) ORWhere(w ...client.PredicateI) {
 	t.where = append(t.where, wl)
 }
 
+func (t *AccountPredicate) WhereIf(cond bool, w client.PredicateI) *AccountPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *AccountPredicate) WhereIn(cond bool, w client.PredicateI) *AccountPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
 func (t *AccountPredicate) IsIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,
