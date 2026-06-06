@@ -343,6 +343,9 @@ func ScanListFirstRow(rows pgx.Rows, model Model, selectedAddress []any) error {
 }
 
 func ScanListNextRows(rows pgx.Rows, model Model, selectedAddress []any) error {
+	if err := rows.Err(); err != nil {
+		return err
+	}
 	a := 0
 	for rows.Next() {
 		err := rows.Scan(selectedAddress...)
@@ -363,11 +366,6 @@ func (receiver *Client) List(ctx context.Context, list []*WhereList, model Model
 		return err
 	}
 	defer rows.Close()
-
-	err = ScanListFirstRow(rows, model, selectedAddress)
-	if err != nil {
-		return err
-	}
 
 	err = ScanListNextRows(rows, model, selectedAddress)
 	if err != nil {
@@ -614,7 +612,7 @@ func (receiver *Client) DistinctString(ctx context.Context, list []*WhereList, m
 		pagingString = paging.String()
 	}
 
-	sqlString := fmt.Sprintf("SELECT DISTINCT \"%s\".\"%s\" FROM \"%s\" %s%s %s %s;",
+	sqlString := fmt.Sprintf("SELECT DISTINCT (\"%s\".\"%s\")::text FROM \"%s\" %s%s %s %s;",
 		model.GetDBName(),
 		field,
 		model.GetDBName(),
@@ -676,4 +674,114 @@ func (receiver *Client) Count(ctx context.Context, list []*WhereList, model Mode
 		return 0, err
 	}
 	return count, nil
+}
+
+func (receiver *Client) DeleteWhere(ctx context.Context, tableName string, list []*WhereList, model Model, idName string) (int64, error) {
+	args := pgx.NamedArgs{}
+	whereStrings := createTableWhereSql(list, args, tableName)
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
+	mainTableWhereString := strings.Join(whereStrings, " OR ")
+
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
+	if len(relationWhereStrings) > 0 {
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
+	}
+
+	var sqlString string
+	if relationSqlString != "" {
+		sqlString = fmt.Sprintf("DELETE FROM \"%s\" WHERE \"%s\" IN (SELECT \"%s\".\"%s\" FROM \"%s\" %s%s);",
+			tableName, idName, tableName, idName, tableName, relationSqlString, summedWhereString)
+	} else {
+		sqlString = fmt.Sprintf("DELETE FROM \"%s\"%s;", tableName, summedWhereString)
+	}
+
+	res, err := receiver.Database.Exec(ctx, sqlString, args)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected(), nil
+}
+
+func (receiver *Client) UpdateWhere(ctx context.Context, tableName string, set map[string]any, list []*WhereList, model Model, idName string) (int64, error) {
+	if len(set) == 0 {
+		return 0, nil
+	}
+
+	var fieldsList []string
+	for k := range set {
+		fieldsList = append(fieldsList, k)
+	}
+
+	statements, args := CreateUpdateQuery(set, fieldsList)
+
+	whereStrings := createTableWhereSql(list, args, tableName)
+	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
+	mainTableWhereString := strings.Join(whereStrings, " OR ")
+
+	var allWhereStrings []string
+	if mainTableWhereString != "" {
+		allWhereStrings = append(allWhereStrings, mainTableWhereString)
+	}
+	if len(relationWhereStrings) > 0 {
+		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
+	}
+
+	summedWhereString := ""
+	if len(allWhereStrings) > 0 {
+		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
+	}
+
+	var sqlString string
+	if relationSqlString != "" {
+		sqlString = fmt.Sprintf("UPDATE \"%s\" SET %s WHERE \"%s\" IN (SELECT \"%s\".\"%s\" FROM \"%s\" %s%s);",
+			tableName, statements, idName, tableName, idName, tableName, relationSqlString, summedWhereString)
+	} else {
+		sqlString = fmt.Sprintf("UPDATE \"%s\" SET %s%s;", tableName, statements, summedWhereString)
+	}
+
+	res, err := receiver.Database.Exec(ctx, sqlString, args)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected(), nil
+}
+
+func (receiver *Client) AggregateRows(ctx context.Context, list []*WhereList, model Model, aggregate *Aggregate) (func() error, func(), error) {
+	sqlString, args := CreateAggregateQuery(list, model, aggregate)
+
+	rows, err := receiver.Database.Query(ctx, sqlString, args)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	scanNext := func() error {
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return err
+		}
+		if rows.Next() {
+			err := rows.Scan(aggregate.aggregateValues...)
+			if err != nil {
+				rows.Close()
+				return err
+			}
+			return nil
+		}
+		rows.Close()
+		return ErrFinalRow
+	}
+
+	closeRows := func() {
+		rows.Close()
+	}
+
+	return scanNext, closeRows, nil
 }

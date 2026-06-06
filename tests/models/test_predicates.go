@@ -241,10 +241,31 @@ func (t *TestPredicate) IsMetadataNotIN(v ...map[string]any) *client.Where {
 	}
 }
 
-func (t *TestPredicate) IsNameLike(v string) *client.Where {
+func (t *TestPredicate) IsIDLike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
-		Name:     TestTableNameField,
+		Name:     TestTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *TestPredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     TestTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *TestPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: TestTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -252,8 +273,9 @@ func (t *TestPredicate) IsNameLike(v string) *client.Where {
 
 func (t *TestPredicate) IsNameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     TestTableNameField,
+		Type: client.ILIKE,
+		Name: TestTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -261,8 +283,9 @@ func (t *TestPredicate) IsNameILike(v string) *client.Where {
 
 func (t *TestPredicate) IsTypeLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     TestTableTypeField,
+		Type: client.LIKE,
+		Name: TestTableTypeField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -270,8 +293,9 @@ func (t *TestPredicate) IsTypeLike(v string) *client.Where {
 
 func (t *TestPredicate) IsTypeILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     TestTableTypeField,
+		Type: client.ILIKE,
+		Name: TestTableTypeField,
+
 		HasValue: true,
 		Value:    v,
 	}

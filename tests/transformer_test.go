@@ -145,4 +145,3 @@ func TestGeneratedModel_Prepare(t *testing.T) {
 	assert.NotNil(t, *metadataVal)
 	assert.NotNil(t, **metadataVal)
 }
-

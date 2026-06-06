@@ -264,6 +264,78 @@ func (t *AccountList) MaxSerial() (uint, error) {
 	return val, err
 }
 
+func (t *AccountList) SumName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(AccountTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) AvgName() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(AccountTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) SumSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(AccountTableSurnameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) AvgSurname() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(AccountTableSurnameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) SumStatus() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(AccountTableStatusField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) AvgStatus() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(AccountTableStatusField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *AccountList) SumSerial() (uint, error) {
 	var val uint
 	a := new(client.Aggregate)
@@ -829,6 +901,12 @@ func (t *AccountList) Aggregate(f func(aggregate *client.Aggregate)) (func() err
 	return t.client.Aggregate(t.ctx, t.where, t, a)
 }
 
+func (t *AccountList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
+}
+
 func (t *AccountList) Create(list ...*Account) error {
 	return databaseAccountListOperationHook(
 		t.ctx,
@@ -883,6 +961,42 @@ func (t *AccountList) Delete(list ...*Account) error {
 			return t.client.BulkDelete(t.ctx, AccountTableName, AccountTableIDField, valueList)
 		},
 	)
+}
+
+func (t *AccountList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseAccountListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			AccountTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, AccountTableName, t.where, t, AccountTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *AccountList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseAccountListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			AccountTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, AccountTableName, set, t.where, t, AccountTableIDField)
+			return err
+		},
+	)
+	return affected, err
 }
 
 func (t *AccountList) Order(field string) *AccountList {

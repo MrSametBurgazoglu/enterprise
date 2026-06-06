@@ -41,6 +41,7 @@ type FieldI interface {
 	IsNumeric() bool
 	IsComparable() bool
 	GetSQLDefault() (string, bool)
+	CanUUID() bool
 }
 
 type Field struct {

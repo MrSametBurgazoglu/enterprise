@@ -203,6 +203,46 @@ func (t *DenemePredicate) IsDenemeTypeNotIN(v ...DenemeType) *client.Where {
 	}
 }
 
+func (t *DenemePredicate) IsIDLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     DenemeTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *DenemePredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     DenemeTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *DenemePredicate) IsTestIDLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     DenemeTableTestIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *DenemePredicate) IsTestIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     DenemeTableTestIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *DenemePredicate) IsTestIDNil() *client.Where {
 	return &client.Where{
 		Type: client.NIL,

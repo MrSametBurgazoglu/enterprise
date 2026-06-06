@@ -75,6 +75,7 @@ func And(preds ...PredicateI) PredicateI {
 type Where struct {
 	Type     string
 	Name     string
+	Cast     string
 	HasValue bool
 	Value    any
 }
@@ -84,6 +85,26 @@ func (w *Where) GetName() string {
 }
 
 func (w *Where) Parse(tableName string, args pgx.NamedArgs) string {
+	sqlFormat := w.Type
+	if w.Cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
+		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, w.Name, w.Cast)
+		sqlFormat = colRef + sqlFormat[len("\"%s\".\"%s\""):]
+		if !w.HasValue {
+			return sqlFormat
+		}
+		baseName := fmt.Sprintf("%s__%s", tableName, w.Name)
+		paramName := ""
+		for idx := 1; ; idx++ {
+			candidate := fmt.Sprintf("%s_%d", baseName, idx)
+			if _, exists := args[candidate]; !exists {
+				paramName = candidate
+				break
+			}
+		}
+		args[paramName] = w.Value
+		return fmt.Sprintf(sqlFormat, fmt.Sprintf("@%s", paramName))
+	}
+
 	if !w.HasValue {
 		return fmt.Sprintf(w.Type, tableName, w.Name)
 	}
@@ -104,6 +125,15 @@ func (w *Where) Parse(tableName string, args pgx.NamedArgs) string {
 
 func (w *Where) GetSqlString(tableName string) string {
 	// Deprecated: kept for compatibility
+	sqlFormat := w.Type
+	if w.Cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
+		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, w.Name, w.Cast)
+		sqlFormat = colRef + sqlFormat[len("\"%s\".\"%s\""):]
+		if w.HasValue {
+			return fmt.Sprintf(sqlFormat, fmt.Sprintf("@%s__%s", tableName, w.Name))
+		}
+		return sqlFormat
+	}
 	if w.HasValue {
 		return fmt.Sprintf(w.Type, tableName, w.Name, fmt.Sprintf("@%s__%s", tableName, w.Name))
 	} else {

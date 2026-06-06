@@ -167,10 +167,31 @@ func (t *GroupPredicate) IsDataNotIN(v ...map[string]any) *client.Where {
 	}
 }
 
-func (t *GroupPredicate) IsNameLike(v string) *client.Where {
+func (t *GroupPredicate) IsIDLike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
-		Name:     GroupTableNameField,
+		Name:     GroupTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     GroupTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: GroupTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -178,8 +199,9 @@ func (t *GroupPredicate) IsNameLike(v string) *client.Where {
 
 func (t *GroupPredicate) IsNameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     GroupTableNameField,
+		Type: client.ILIKE,
+		Name: GroupTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -187,8 +209,9 @@ func (t *GroupPredicate) IsNameILike(v string) *client.Where {
 
 func (t *GroupPredicate) IsSurnameLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     GroupTableSurnameField,
+		Type: client.LIKE,
+		Name: GroupTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -196,8 +219,9 @@ func (t *GroupPredicate) IsSurnameLike(v string) *client.Where {
 
 func (t *GroupPredicate) IsSurnameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     GroupTableSurnameField,
+		Type: client.ILIKE,
+		Name: GroupTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}

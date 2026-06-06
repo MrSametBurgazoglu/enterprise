@@ -716,6 +716,12 @@ func (t *DenemeList) Aggregate(f func(aggregate *client.Aggregate)) (func() erro
 	return t.client.Aggregate(t.ctx, t.where, t, a)
 }
 
+func (t *DenemeList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
+}
+
 func (t *DenemeList) Create(list ...*Deneme) error {
 	return databaseDenemeListOperationHook(
 		t.ctx,
@@ -770,6 +776,42 @@ func (t *DenemeList) Delete(list ...*Deneme) error {
 			return t.client.BulkDelete(t.ctx, DenemeTableName, DenemeTableIDField, valueList)
 		},
 	)
+}
+
+func (t *DenemeList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseDenemeListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, DenemeTableName, t.where, t, DenemeTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *DenemeList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseDenemeListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, DenemeTableName, set, t.where, t, DenemeTableIDField)
+			return err
+		},
+	)
+	return affected, err
 }
 
 func (t *DenemeList) Order(field string) *DenemeList {

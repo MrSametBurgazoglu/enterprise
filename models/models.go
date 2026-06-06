@@ -99,7 +99,11 @@ func (t *Table) SetIDField(field FieldI) {
 }
 
 func (t *Table) IDFieldLower() string {
-	return strings.ToLower(t.IDField)
+	lower := strings.ToLower(t.IDField)
+	if goKeywords[lower] {
+		return lower + "_"
+	}
+	return lower
 }
 
 func (t *Table) AddIndex(name string, columnNames ...string) {

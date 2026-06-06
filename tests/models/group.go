@@ -209,6 +209,54 @@ func (t *GroupList) MaxSurname() (string, error) {
 	return val, err
 }
 
+func (t *GroupList) SumName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(GroupTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) AvgName() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(GroupTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) SumSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(GroupTableSurnameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) AvgSurname() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(GroupTableSurnameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Group) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -577,6 +625,12 @@ func (t *GroupList) Aggregate(f func(aggregate *client.Aggregate)) (func() error
 	return t.client.Aggregate(t.ctx, t.where, t, a)
 }
 
+func (t *GroupList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
+}
+
 func (t *GroupList) Create(list ...*Group) error {
 	return databaseGroupListOperationHook(
 		t.ctx,
@@ -631,6 +685,42 @@ func (t *GroupList) Delete(list ...*Group) error {
 			return t.client.BulkDelete(t.ctx, GroupTableName, GroupTableIDField, valueList)
 		},
 	)
+}
+
+func (t *GroupList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseGroupListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, GroupTableName, t.where, t, GroupTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *GroupList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseGroupListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, GroupTableName, set, t.where, t, GroupTableIDField)
+			return err
+		},
+	)
+	return affected, err
 }
 
 func (t *GroupList) Order(field string) *GroupList {

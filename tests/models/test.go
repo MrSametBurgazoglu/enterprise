@@ -241,6 +241,54 @@ func (t *TestList) MaxType() (string, error) {
 	return val, err
 }
 
+func (t *TestList) SumName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(TestTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) AvgName() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(TestTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) SumType() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(TestTableTypeField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) AvgType() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(TestTableTypeField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Test) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -685,6 +733,12 @@ func (t *TestList) Aggregate(f func(aggregate *client.Aggregate)) (func() error,
 	return t.client.Aggregate(t.ctx, t.where, t, a)
 }
 
+func (t *TestList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
+}
+
 func (t *TestList) Create(list ...*Test) error {
 	return databaseTestListOperationHook(
 		t.ctx,
@@ -739,6 +793,42 @@ func (t *TestList) Delete(list ...*Test) error {
 			return t.client.BulkDelete(t.ctx, TestTableName, TestTableIDField, valueList)
 		},
 	)
+}
+
+func (t *TestList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseTestListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, TestTableName, t.where, t, TestTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *TestList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseTestListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, TestTableName, set, t.where, t, TestTableIDField)
+			return err
+		},
+	)
+	return affected, err
 }
 
 func (t *TestList) Order(field string) *TestList {

@@ -239,10 +239,31 @@ func (t *AccountPredicate) IsSerialNotIN(v ...uint) *client.Where {
 	}
 }
 
-func (t *AccountPredicate) IsNameLike(v string) *client.Where {
+func (t *AccountPredicate) IsIDLike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
-		Name:     AccountTableNameField,
+		Name:     AccountTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     AccountTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: AccountTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -250,8 +271,9 @@ func (t *AccountPredicate) IsNameLike(v string) *client.Where {
 
 func (t *AccountPredicate) IsNameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     AccountTableNameField,
+		Type: client.ILIKE,
+		Name: AccountTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -259,8 +281,9 @@ func (t *AccountPredicate) IsNameILike(v string) *client.Where {
 
 func (t *AccountPredicate) IsSurnameLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     AccountTableSurnameField,
+		Type: client.LIKE,
+		Name: AccountTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -268,8 +291,9 @@ func (t *AccountPredicate) IsSurnameLike(v string) *client.Where {
 
 func (t *AccountPredicate) IsSurnameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     AccountTableSurnameField,
+		Type: client.ILIKE,
+		Name: AccountTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -277,8 +301,9 @@ func (t *AccountPredicate) IsSurnameILike(v string) *client.Where {
 
 func (t *AccountPredicate) IsStatusLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     AccountTableStatusField,
+		Type: client.LIKE,
+		Name: AccountTableStatusField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -286,8 +311,29 @@ func (t *AccountPredicate) IsStatusLike(v string) *client.Where {
 
 func (t *AccountPredicate) IsStatusILike(v string) *client.Where {
 	return &client.Where{
+		Type: client.ILIKE,
+		Name: AccountTableStatusField,
+
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsDenemeIDLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     AccountTableDenemeIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsDenemeIDILike(v string) *client.Where {
+	return &client.Where{
 		Type:     client.ILIKE,
-		Name:     AccountTableStatusField,
+		Name:     AccountTableDenemeIDField,
+		Cast:     "text",
 		HasValue: true,
 		Value:    v,
 	}

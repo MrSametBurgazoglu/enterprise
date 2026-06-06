@@ -16,6 +16,10 @@ import (
 )
 
 func Migrate(ctx context.Context, postgresUrl, migrationPath, planName string, tables []*models.Table) {
+	MigrateWithExclude(ctx, postgresUrl, migrationPath, planName, tables, []string{"atlas_schema_revisions", "schema_migrations"})
+}
+
+func MigrateWithExclude(ctx context.Context, postgresUrl, migrationPath, planName string, tables []*models.Table, exclude []string) {
 	// Define the migration directory
 	dir := getMigrationDirectory(migrationPath)
 
@@ -25,7 +29,7 @@ func Migrate(ctx context.Context, postgresUrl, migrationPath, planName string, t
 	defer closeClient()
 
 	// Inspect the current state of the database
-	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions", "schema_migrations"}})
+	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: exclude})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,13 +63,17 @@ func Migrate(ctx context.Context, postgresUrl, migrationPath, planName string, t
 }
 
 func AutoApplyMigration(ctx context.Context, postgresUrl, planName string, tables ...*models.Table) {
+	AutoApplyMigrationWithExclude(ctx, postgresUrl, planName, tables, []string{"atlas_schema_revisions", "schema_migrations"})
+}
+
+func AutoApplyMigrationWithExclude(ctx context.Context, postgresUrl, planName string, tables []*models.Table, exclude []string) {
 	parsedURL := getURL(postgresUrl)
 
 	drv, closeClient := getDriver(ctx, parsedURL)
 	defer closeClient()
 
 	// Inspect the current state of the database
-	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions", "schema_migrations"}})
+	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: exclude})
 	if err != nil {
 		log.Fatal(err)
 	}

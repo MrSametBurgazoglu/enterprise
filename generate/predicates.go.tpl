@@ -67,11 +67,12 @@ func (t *{{$.TableName}}Predicate) Is{{.GetName}}NotIN(v ...{{.GetBaseType}}) *c
 }
 {{end}}
 
-{{range .Fields}}{{if eq .GetBaseType "string"}}
+{{range .Fields}}{{if or (eq .GetBaseType "string") (.CanUUID)}}
 func (t *{{$.TableName}}Predicate) Is{{.GetName}}Like(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
 		Name:     {{$.TableName}}Table{{.GetName}}Field,
+		{{if .CanUUID}}Cast:     "text",{{end}}
 		HasValue: true,
 		Value:    v,
 	}
@@ -81,6 +82,7 @@ func (t *{{$.TableName}}Predicate) Is{{.GetName}}ILike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.ILIKE,
 		Name:     {{$.TableName}}Table{{.GetName}}Field,
+		{{if .CanUUID}}Cast:     "text",{{end}}
 		HasValue: true,
 		Value:    v,
 	}

@@ -192,11 +192,11 @@ func (t *{{$.TableName}}List) Max{{.GetName}}() ({{.GetType}}, error) {
 }
 {{end}}{{end}}
 
-{{range .Fields}}{{if .IsNumeric}}
+{{range .Fields}}{{if or .IsNumeric (eq .GetBaseType "string")}}
 func (t *{{$.TableName}}List) Sum{{.GetName}}() ({{.GetType}}, error) {
     var val {{.GetType}}
     a := new(client.Aggregate)
-    a.Sum({{$.TableName}}Table{{.GetName}}Field, &val)
+    {{if eq .GetBaseType "string"}}a.SumCast({{$.TableName}}Table{{.GetName}}Field, "numeric", &val){{else}}a.Sum({{$.TableName}}Table{{.GetName}}Field, &val){{end}}
     scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
     if err != nil {
         return val, err
@@ -208,7 +208,7 @@ func (t *{{$.TableName}}List) Sum{{.GetName}}() ({{.GetType}}, error) {
 func (t *{{$.TableName}}List) Avg{{.GetName}}() (float64, error) {
     var val float64
     a := new(client.Aggregate)
-    a.Avg({{$.TableName}}Table{{.GetName}}Field, &val)
+    {{if eq .GetBaseType "string"}}a.AvgCast({{$.TableName}}Table{{.GetName}}Field, "numeric", &val){{else}}a.Avg({{$.TableName}}Table{{.GetName}}Field, &val){{end}}
     scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
     if err != nil {
         return val, err
@@ -596,6 +596,12 @@ func (t *{{.TableName}}List) Aggregate(f func (aggregate *client.Aggregate)) (fu
     return t.client.Aggregate(t.ctx, t.where, t, a)
 }
 
+func (t *{{.TableName}}List) AggregateRows(f func (aggregate *client.Aggregate)) (func() error, func(), error) {
+    a := new(client.Aggregate)
+    f(a)
+    return t.client.AggregateRows(t.ctx, t.where, t, a)
+}
+
 func (t *{{.TableName}}List) Create(list ...*{{.TableName}}) error{
     return database{{.TableName}}ListOperationHook(
         t.ctx,
@@ -650,6 +656,42 @@ func (t *{{.TableName}}List) Delete(list ...*{{.TableName}}) error{
             return t.client.BulkDelete(t.ctx, {{.TableName}}TableName, {{.TableName}}Table{{.IDField}}Field, valueList)
         },
     )
+}
+
+func (t *{{.TableName}}List) DeleteWhere() (int64, error) {
+    var affected int64
+    err := database{{.TableName}}ListOperationHook(
+        t.ctx,
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeBulkDelete,
+        ),
+        t,
+        func() error {
+            var err error
+            affected, err = t.client.DeleteWhere(t.ctx, {{.TableName}}TableName, t.where, t, {{.TableName}}Table{{.IDField}}Field)
+            return err
+        },
+    )
+    return affected, err
+}
+
+func (t *{{.TableName}}List) UpdateWhere(set map[string]any) (int64, error) {
+    var affected int64
+    err := database{{.TableName}}ListOperationHook(
+        t.ctx,
+        client.NewOperationInfo(
+            {{.TableName}}TableName,
+            client.OperationTypeBulkUpdate,
+        ),
+        t,
+        func() error {
+            var err error
+            affected, err = t.client.UpdateWhere(t.ctx, {{.TableName}}TableName, set, t.where, t, {{.TableName}}Table{{.IDField}}Field)
+            return err
+        },
+    )
+    return affected, err
 }
 
 
