@@ -99,7 +99,7 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 	if len(relationWhereStrings) > 0 {
 		allWhereStrings = append(allWhereStrings, relationWhereStrings...)
 	}
-	
+
 	summedWhereString := ""
 	if len(allWhereStrings) > 0 {
 		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
@@ -395,7 +395,7 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 	whereStrings := createTableWhereSql(list, args, model.GetDBName())
 	relationSqlString, relationWhereStrings := createTableRelationWhereSql(model, args)
 	mainTableWhereString := strings.Join(whereStrings, " OR ")
-	
+
 	var allWhereStrings []string
 	if mainTableWhereString != "" {
 		allWhereStrings = append(allWhereStrings, mainTableWhereString)

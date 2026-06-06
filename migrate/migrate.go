@@ -25,7 +25,7 @@ func Migrate(ctx context.Context, postgresUrl, migrationPath, planName string, t
 	defer closeClient()
 
 	// Inspect the current state of the database
-	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions"}})
+	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions", "schema_migrations"}})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func AutoApplyMigration(ctx context.Context, postgresUrl, planName string, table
 	defer closeClient()
 
 	// Inspect the current state of the database
-	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions"}})
+	currentState, err := drv.InspectSchema(ctx, parsedURL.Schema, &schema.InspectOptions{Exclude: []string{"atlas_schema_revisions", "schema_migrations"}})
 	if err != nil {
 		log.Fatal(err)
 	}

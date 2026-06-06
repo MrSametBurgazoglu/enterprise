@@ -25,7 +25,7 @@ func (u *JSONDBField) GetSQLDefault() (string, bool) {
 }
 
 func (u *JSONDBField) PrepareFunc() string {
-	return "make(map[string]any)"
+	return "&map[string]any{}"
 }
 
 func JSONField(name string) *JSONDBField {

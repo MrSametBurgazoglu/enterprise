@@ -13,7 +13,6 @@ func (e *EnumValue) Title() string {
 	return ToCamelCase(e.value)
 }
 
-
 func (e *EnumValue) Value() string {
 	return e.value
 }
@@ -62,7 +61,7 @@ func EnumField(name string, values []string) *EnumDBField {
 	f.TypeName = name
 	f.setField(name, f.TypeName, FieldTypeEnum)
 	valuesArray := make([]*EnumValue, len(values))
-	for i, v := range values{
+	for i, v := range values {
 		valuesArray[i] = &EnumValue{value: v}
 	}
 	f.Values = valuesArray

@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	EQ   = "\"%s\".\"%s\" = %s"
-	NEQ  = "\"%s\".\"%s\" != %s"
-	GT   = "\"%s\".\"%s\" > %s"
-	GTE  = "\"%s\".\"%s\" >= %s"
-	LT   = "\"%s\".\"%s\" < %s"
-	LTE  = "\"%s\".\"%s\" <= %s"
-	NIL  = "\"%s\".\"%s\" IS NULL"
-	NNIL = "\"%s\".\"%s\" IS NOT NULL"
-	ANY  = "\"%s\".\"%s\" = ANY(%s)"
-	NANY = "\"%s\".\"%s\" != ANY(%s)"
-	LIKE = "\"%s\".\"%s\" LIKE %s"
+	EQ    = "\"%s\".\"%s\" = %s"
+	NEQ   = "\"%s\".\"%s\" != %s"
+	GT    = "\"%s\".\"%s\" > %s"
+	GTE   = "\"%s\".\"%s\" >= %s"
+	LT    = "\"%s\".\"%s\" < %s"
+	LTE   = "\"%s\".\"%s\" <= %s"
+	NIL   = "\"%s\".\"%s\" IS NULL"
+	NNIL  = "\"%s\".\"%s\" IS NOT NULL"
+	ANY   = "\"%s\".\"%s\" = ANY(%s)"
+	NANY  = "\"%s\".\"%s\" != ANY(%s)"
+	LIKE  = "\"%s\".\"%s\" LIKE %s"
 	ILIKE = "\"%s\".\"%s\" ILIKE %s"
 )
 

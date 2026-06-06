@@ -69,8 +69,40 @@ func (f *Field) GetName() string {
 	return f.Name
 }
 
+var goKeywords = map[string]bool{
+	"break":       true,
+	"default":     true,
+	"func":        true,
+	"interface":   true,
+	"select":      true,
+	"case":        true,
+	"defer":       true,
+	"go":          true,
+	"map":         true,
+	"struct":      true,
+	"chan":        true,
+	"else":        true,
+	"goto":        true,
+	"package":     true,
+	"switch":      true,
+	"const":       true,
+	"fallthrough": true,
+	"if":          true,
+	"range":       true,
+	"type":        true,
+	"continue":    true,
+	"for":         true,
+	"import":      true,
+	"return":      true,
+	"var":         true,
+}
+
 func (f *Field) GetNameLower() string {
-	return strings.ToLower(f.Name)
+	lower := strings.ToLower(f.Name)
+	if goKeywords[lower] {
+		return lower + "_"
+	}
+	return lower
 }
 
 func (f *Field) GetNameTitle() string {

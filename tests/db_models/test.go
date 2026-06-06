@@ -15,6 +15,8 @@ func Test() *models.Table {
 			models.StringField("Name"),
 			models.TimeField("CreatedAt"),
 			models.CustomField("Info", "text", custom_data_type.Custom{}).SetNillable(),
+			models.StringField("Type"),
+			models.JSONField("Metadata").SetNillable(),
 		},
 		Relations: []*models.Relation{
 			models.OneToMany(DenemeName, idField.DBName, "test_id"),

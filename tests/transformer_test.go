@@ -1,12 +1,14 @@
 package tests
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/MrSametBurgazoglu/enterprise/migrate"
 	"github.com/MrSametBurgazoglu/enterprise/models"
+	testmodels "github.com/MrSametBurgazoglu/enterprise/tests/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -103,9 +105,16 @@ func TestTransformFieldToAtlasColumn_Defaults(t *testing.T) {
 			assert.NotNil(t, col)
 			if tc.hasDef {
 				assert.NotNil(t, col.Default)
-				literal, ok := col.Default.(*schema.Literal)
-				if assert.True(t, ok, "expected *schema.Literal") {
-					assert.Equal(t, tc.expected, literal.V)
+				if tc.name == "UUID DefaultFunc" || tc.name == "Time DefaultFunc" {
+					raw, ok := col.Default.(*schema.RawExpr)
+					if assert.True(t, ok, "expected *schema.RawExpr") {
+						assert.Equal(t, tc.expected, raw.X)
+					}
+				} else {
+					literal, ok := col.Default.(*schema.Literal)
+					if assert.True(t, ok, "expected *schema.Literal") {
+						assert.Equal(t, tc.expected, literal.V)
+					}
 				}
 			} else {
 				assert.Nil(t, col.Default)
@@ -113,3 +122,27 @@ func TestTransformFieldToAtlasColumn_Defaults(t *testing.T) {
 		})
 	}
 }
+
+func TestGeneratedModel_Prepare(t *testing.T) {
+	ctx := context.Background()
+	testModel := testmodels.NewTest(ctx, nil)
+	assert.NotNil(t, testModel)
+
+	// Test Go keyword collision fix (Bug 5)
+	testModel.SetType("some-type")
+	assert.Equal(t, "some-type", testModel.GetType())
+
+	// Test nillable JSONField preparation fix (Bug 6)
+	tr := testModel.GetSelector()
+	tr.SelectMetadata()
+	var metadataVal **map[string]any
+	for _, f := range tr.GetSelectedFields() {
+		if f.Name == testmodels.TestTableMetadataField {
+			metadataVal = f.Value.(**map[string]any)
+		}
+	}
+	assert.NotNil(t, metadataVal)
+	assert.NotNil(t, *metadataVal)
+	assert.NotNil(t, **metadataVal)
+}
+

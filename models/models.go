@@ -71,18 +71,18 @@ func ManyToMany(table, toField, fromField, relationField, manyTableName string) 
 }
 
 type Table struct {
-	PackageName      string
-	TableName        string
-	DBName           string
-	IDField          string
-	IDDBField        string
-	IDFieldType      string
-	Fields           []FieldI
-	Relations        []*Relation
-	IDColumn         FieldI
-	RequiredPackages []string
+	PackageName              string
+	TableName                string
+	DBName                   string
+	IDField                  string
+	IDDBField                string
+	IDFieldType              string
+	Fields                   []FieldI
+	Relations                []*Relation
+	IDColumn                 FieldI
+	RequiredPackages         []string
 	InternalRequiredPackages []string
-	Indexes          []Index
+	Indexes                  []Index
 }
 
 func (t *Table) SetTableName(name string) {

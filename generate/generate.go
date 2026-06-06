@@ -33,7 +33,7 @@ func Models(tables ...*models.Table) {
 	Clients(g)
 	Schemas(g)
 	Predicates(g)
-	
+
 	cmd := exec.Command("gofmt", "-s", "-w", ".")
 	_ = cmd.Run()
 }
@@ -47,7 +47,7 @@ func Schemas(g *models.Generation) {
 					table.RequiredPackages = append(table.RequiredPackages, s)
 				}
 			}
-			if field.IsCanIn(){
+			if field.IsCanIn() {
 				if !slices.Contains(table.InternalRequiredPackages, "slices") {
 					table.InternalRequiredPackages = append(table.InternalRequiredPackages, "slices")
 				}
