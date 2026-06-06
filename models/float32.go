@@ -16,6 +16,16 @@ func (i *Float32DBField) GetDefault() string {
 	}
 }
 
+func (i *Float32DBField) GetSQLDefault() (string, bool) {
+	if !i.HaveDefault {
+		return "", false
+	}
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetSQLDefault()
+	}
+	return strconv.FormatFloat(float64(i.DefaultValue), 'g', -1, 32), true
+}
+
 func (i *Float32DBField) Default(v float32) *Float32DBField {
 	i.DefaultValue = v
 	i.HaveDefault = true

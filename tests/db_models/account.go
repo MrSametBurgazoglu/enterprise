@@ -13,6 +13,7 @@ func Account() *models.Table {
 			idField,
 			models.StringField("Name"),
 			models.StringField("Surname"),
+			models.StringField("Status").Default("active"),
 			models.UUIDField("DenemeID").SetNillable(),
 			models.UintField("Serial").AddSerial(),
 		},

@@ -21,6 +21,13 @@ func (u *UUIDDBField) GetDefault() string {
 	return ""
 }
 
+func (u *UUIDDBField) GetSQLDefault() (string, bool) {
+	if !u.HaveDefault {
+		return "", false
+	}
+	return u.Field.GetSQLDefault()
+}
+
 func (u *UUIDDBField) PrepareFunc() string {
 	return "&uuid.UUID{}"
 }

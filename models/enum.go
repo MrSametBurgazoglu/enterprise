@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 )
 
 type EnumValue struct {
@@ -42,6 +43,16 @@ func (s *EnumDBField) GetDefault() string {
 	} else {
 		return fmt.Sprintf("\"%s\"", s.DefaultValue)
 	}
+}
+
+func (s *EnumDBField) GetSQLDefault() (string, bool) {
+	if !s.HaveDefault {
+		return "", false
+	}
+	if s.defaultFunc.IsValid() {
+		return s.Field.GetSQLDefault()
+	}
+	return "'" + strings.ReplaceAll(s.DefaultValue, "'", "''") + "'", true
 }
 
 func EnumField(name string, values []string) *EnumDBField {

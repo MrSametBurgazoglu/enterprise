@@ -16,6 +16,16 @@ func (i *UintDBField) GetDefault() string {
 	}
 }
 
+func (i *UintDBField) GetSQLDefault() (string, bool) {
+	if !i.HaveDefault {
+		return "", false
+	}
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetSQLDefault()
+	}
+	return strconv.Itoa(int(i.DefaultValue)), true
+}
+
 func (i *UintDBField) Default(v uint) *UintDBField {
 	i.DefaultValue = v
 	i.HaveDefault = true

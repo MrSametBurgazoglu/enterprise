@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// CustomDBField represents a field with a custom type in the database.
+// Note: defaults for CustomField must be function-based (via DefaultFunc)
+// as there is no single-value Default method.
 type CustomDBField struct {
 	*Field
 }
@@ -14,6 +17,13 @@ type CustomDBField struct {
 type CustomDBFieldI interface {
 	Scan(src any) error
 	Value() (driver.Value, error)
+}
+
+func (i *CustomDBField) GetSQLDefault() (string, bool) {
+	if !i.HaveDefault {
+		return "", false
+	}
+	return i.Field.GetSQLDefault()
 }
 
 func CustomField(name, postgresType string, v CustomDBFieldI) *CustomDBField {

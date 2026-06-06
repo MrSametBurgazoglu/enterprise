@@ -50,6 +50,15 @@ func (t *AccountPredicate) IsSurnameEqual(v string) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsStatusEqual(v string) *client.Where {
+	return &client.Where{
+		Type:     client.EQ,
+		Name:     AccountTableStatusField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsDenemeIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,
@@ -90,6 +99,15 @@ func (t *AccountPredicate) IsSurnameNotEqual(v string) *client.Where {
 	return &client.Where{
 		Type:     client.NEQ,
 		Name:     AccountTableSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsStatusNotEqual(v string) *client.Where {
+	return &client.Where{
+		Type:     client.NEQ,
+		Name:     AccountTableStatusField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -140,6 +158,15 @@ func (t *AccountPredicate) IsSurnameIN(v ...string) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsStatusIN(v ...string) *client.Where {
+	return &client.Where{
+		Type:     client.ANY,
+		Name:     AccountTableStatusField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsDenemeIDIN(v ...uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.ANY,
@@ -180,6 +207,15 @@ func (t *AccountPredicate) IsSurnameNotIN(v ...string) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
 		Name:     AccountTableSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsStatusNotIN(v ...string) *client.Where {
+	return &client.Where{
+		Type:     client.NANY,
+		Name:     AccountTableStatusField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -234,6 +270,24 @@ func (t *AccountPredicate) IsSurnameILike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.ILIKE,
 		Name:     AccountTableSurnameField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsStatusLike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.LIKE,
+		Name:     AccountTableStatusField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsStatusILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     AccountTableStatusField,
 		HasValue: true,
 		Value:    v,
 	}

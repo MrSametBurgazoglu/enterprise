@@ -33,7 +33,9 @@ func Models(tables ...*models.Table) {
 	Clients(g)
 	Schemas(g)
 	Predicates(g)
-	exec.Command("gofmt", "-s", "-w", ".")
+	
+	cmd := exec.Command("gofmt", "-s", "-w", ".")
+	_ = cmd.Run()
 }
 
 func Schemas(g *models.Generation) {

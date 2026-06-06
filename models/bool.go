@@ -16,6 +16,19 @@ func (i *BoolDBField) GetDefault() string {
 	}
 }
 
+func (i *BoolDBField) GetSQLDefault() (string, bool) {
+	if !i.HaveDefault {
+		return "", false
+	}
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetSQLDefault()
+	}
+	if i.DefaultValue {
+		return "true", true
+	}
+	return "false", true
+}
+
 func (i *BoolDBField) Default(v bool) *BoolDBField {
 	i.DefaultValue = v
 	i.HaveDefault = true

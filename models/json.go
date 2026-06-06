@@ -17,6 +17,13 @@ func (u *JSONDBField) GetDefault() string {
 	return "map[string]any"
 }
 
+func (u *JSONDBField) GetSQLDefault() (string, bool) {
+	if !u.HaveDefault {
+		return "", false
+	}
+	return u.Field.GetSQLDefault()
+}
+
 func (u *JSONDBField) PrepareFunc() string {
 	return "make(map[string]any)"
 }

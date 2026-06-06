@@ -1,5 +1,10 @@
 package models
 
+import (
+	"strconv"
+	"strings"
+)
+
 type StringDBField struct {
 	*Field
 	DefaultValue      string
@@ -18,14 +23,20 @@ func (s *StringDBField) DefaultFunc(v func() string) *StringDBField {
 }
 
 func (s *StringDBField) GetDefault() string {
-	if !s.HaveDefault {
-		return "\"\""
-	}
 	if s.defaultFunc.IsValid() {
 		return s.Field.GetDefault()
-	} else {
-		return s.DefaultValue
 	}
+	return strconv.Quote(s.DefaultValue)
+}
+
+func (s *StringDBField) GetSQLDefault() (string, bool) {
+	if !s.HaveDefault {
+		return "", false
+	}
+	if s.defaultFunc.IsValid() {
+		return s.Field.GetSQLDefault()
+	}
+	return "'" + strings.ReplaceAll(s.DefaultValue, "'", "''") + "'", true
 }
 
 func StringField(name string) *StringDBField {

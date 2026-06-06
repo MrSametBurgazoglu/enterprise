@@ -1,5 +1,9 @@
 package models
 
+import (
+	"fmt"
+)
+
 type ByteDBField struct {
 	*Field
 	DefaultValue      []byte
@@ -11,6 +15,16 @@ func (i *ByteDBField) GetDefault() string {
 		return i.Field.GetDefault()
 	}
 	return ""
+}
+
+func (i *ByteDBField) GetSQLDefault() (string, bool) {
+	if !i.HaveDefault {
+		return "", false
+	}
+	if i.defaultFunc.IsValid() {
+		return i.Field.GetSQLDefault()
+	}
+	return fmt.Sprintf("'\\x%x'", i.DefaultValue), true
 }
 
 func (i *ByteDBField) Default(v []byte) *ByteDBField {

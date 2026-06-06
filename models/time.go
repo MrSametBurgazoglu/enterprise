@@ -21,6 +21,13 @@ func (t *TimeDBField) GetDefault() string {
 	return ""
 }
 
+func (t *TimeDBField) GetSQLDefault() (string, bool) {
+	if !t.HaveDefault {
+		return "", false
+	}
+	return t.Field.GetSQLDefault()
+}
+
 func (t *TimeDBField) PrepareFunc() string {
 	return "new(time.Time)"
 }

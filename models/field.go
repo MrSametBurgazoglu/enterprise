@@ -40,6 +40,7 @@ type FieldI interface {
 	GetDefault() string
 	IsNumeric() bool
 	IsComparable() bool
+	GetSQLDefault() (string, bool)
 }
 
 type Field struct {
@@ -231,6 +232,26 @@ func (f *Field) GetDefault() string {
 		}
 	}
 	return ""
+}
+
+func (f *Field) GetSQLDefault() (string, bool) {
+	if !f.HaveDefault {
+		return "", false
+	}
+	if f.defaultFunc.IsValid() {
+		pc := f.defaultFunc.Pointer()
+		fn := runtime.FuncForPC(pc)
+		if fn != nil {
+			fullName := fn.Name()
+			if strings.HasSuffix(fullName, "uuid.New") {
+				return "gen_random_uuid()", true
+			}
+			if strings.HasSuffix(fullName, "time.Now") {
+				return "now()", true
+			}
+		}
+	}
+	return "", false
 }
 
 func (f *Field) setField(name, typeName string, fieldType int) {

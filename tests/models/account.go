@@ -16,6 +16,7 @@ const (
 	AccountTableIDField       string = "id"
 	AccountTableNameField     string = "name"
 	AccountTableSurnameField  string = "surname"
+	AccountTableStatusField   string = "status"
 	AccountTableDenemeIDField string = "deneme_id"
 	AccountTableSerialField   string = "serial"
 )
@@ -60,6 +61,8 @@ type Account struct {
 	name string
 
 	surname string
+
+	status string
 
 	denemeid *uuid.UUID
 
@@ -213,6 +216,30 @@ func (t *AccountList) MaxSurname() (string, error) {
 	return val, err
 }
 
+func (t *AccountList) MinStatus() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Min(AccountTableStatusField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) MaxStatus() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.Max(AccountTableStatusField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *AccountList) MinSerial() (uint, error) {
 	var val uint
 	a := new(client.Aggregate)
@@ -273,6 +300,10 @@ func (t *Account) SetSurname(v string) {
 	t.surname = v
 	t.SetSurnameField()
 }
+func (t *Account) SetStatus(v string) {
+	t.status = v
+	t.SetStatusField()
+}
 func (t *Account) SetDenemeID(v *uuid.UUID) {
 	t.denemeid = v
 	t.SetDenemeIDField()
@@ -304,6 +335,12 @@ func (t *Account) SetSurnameNillable(v *string) {
 		return
 	}
 	t.SetSurname(*v)
+}
+func (t *Account) SetStatusNillable(v *string) {
+	if v == nil {
+		return
+	}
+	t.SetStatus(*v)
 }
 
 func (t *Account) SetSerialNillable(v *uint) {
@@ -354,6 +391,9 @@ func (t *Account) GetNameNillable() *string {
 func (t *Account) GetSurnameNillable() *string {
 	return &t.surname
 }
+func (t *Account) GetStatusNillable() *string {
+	return &t.status
+}
 
 func (t *Account) GetSerialNillable() *uint {
 	return &t.serial
@@ -367,6 +407,10 @@ func (t *Account) SurnameIN(v ...string) bool {
 	return slices.Contains(v, t.surname)
 }
 
+func (t *Account) StatusIN(v ...string) bool {
+	return slices.Contains(v, t.status)
+}
+
 func (t *Account) SerialIN(v ...uint) bool {
 	return slices.Contains(v, t.serial)
 }
@@ -377,6 +421,10 @@ func (t *Account) NameNotIN(v ...string) bool {
 
 func (t *Account) SurnameNotIN(v ...string) bool {
 	return !slices.Contains(v, t.surname)
+}
+
+func (t *Account) StatusNotIN(v ...string) bool {
+	return !slices.Contains(v, t.status)
 }
 
 func (t *Account) SerialNotIN(v ...uint) bool {
@@ -393,6 +441,10 @@ func (t *Account) GetName() string {
 
 func (t *Account) GetSurname() string {
 	return t.surname
+}
+
+func (t *Account) GetStatus() string {
+	return t.status
 }
 
 func (t *Account) GetDenemeID() *uuid.UUID {
@@ -430,6 +482,13 @@ func (t *Account) SetSurnameField() {
 	if _, exist := t.changedFields[AccountTableSurnameField]; !exist {
 		t.changedFields[AccountTableSurnameField] = t.surname
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableSurnameField)
+	}
+
+}
+func (t *Account) SetStatusField() {
+	if _, exist := t.changedFields[AccountTableStatusField]; !exist {
+		t.changedFields[AccountTableStatusField] = t.status
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableStatusField)
 	}
 
 }
@@ -596,6 +655,12 @@ func (t *Account) SetDefaults() {
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableIDField)
 	}
 
+	if _, exist := t.changedFields[AccountTableStatusField]; !exist {
+		t.status = "active"
+		t.changedFields[AccountTableStatusField] = t.status
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableStatusField)
+	}
+
 	v := &client.SelectedField{Name: AccountTableSerialField, Value: &t.serial}
 	t.serialFields = append(t.serialFields, v)
 
@@ -621,6 +686,7 @@ func (t *Account) ScanResult() {
 	t.id = t.result.id
 	t.name = t.result.name
 	t.surname = t.result.surname
+	t.status = t.result.status
 	t.denemeid = t.result.denemeid
 	t.serial = t.result.serial
 
@@ -838,6 +904,7 @@ type AccountResult struct {
 	id       uuid.UUID
 	name     string
 	surname  string
+	status   string
 	denemeid *uuid.UUID
 	serial   uint
 
@@ -885,6 +952,11 @@ func (t *AccountResult) SelectSurname() {
 	t.selectedFields = append(t.selectedFields, v)
 }
 
+func (t *AccountResult) SelectStatus() {
+	v := &client.SelectedField{Name: AccountTableStatusField, Value: &t.status}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
 func (t *AccountResult) SelectDenemeID() {
 	v := &client.SelectedField{Name: AccountTableDenemeIDField, Value: &t.denemeid}
 	t.selectedFields = append(t.selectedFields, v)
@@ -903,6 +975,7 @@ func (t *AccountResult) SelectAll() {
 	t.SelectID()
 	t.SelectName()
 	t.SelectSurname()
+	t.SelectStatus()
 	t.SelectDenemeID()
 	t.SelectSerial()
 

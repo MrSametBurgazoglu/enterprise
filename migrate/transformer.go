@@ -186,5 +186,8 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 	}
 
 	column.Type.Type = t
+	if sql, ok := field.GetSQLDefault(); ok {
+		column.SetDefault(&schema.Literal{V: sql})
+	}
 	return column
 }
