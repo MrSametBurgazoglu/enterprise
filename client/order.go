@@ -15,8 +15,8 @@ func (o Order) String() string {
 	if o.Desc {
 		order = "DESC"
 	}
-	field := o.Field
-	if !strings.Contains(field, "\"") {
+	field := ValidateIdentifier(o.Field)
+	if !strings.Contains(field, "\"") && !strings.ContainsAny(field, "() ,") {
 		if strings.Contains(field, ".") {
 			parts := strings.Split(field, ".")
 			for i, p := range parts {
@@ -27,5 +27,5 @@ func (o Order) String() string {
 			field = fmt.Sprintf(`"%s"`, field)
 		}
 	}
-	return fmt.Sprintf("ORDER BY %s %s", field, order)
+	return fmt.Sprintf("%s %s", field, order)
 }

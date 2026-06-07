@@ -42,6 +42,9 @@ func TestIntegration(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Exit()
 
+	// Clean tables before starting test to avoid residual state from previous failed runs
+	_, _ = db.Exec(ctx, "TRUNCATE TABLE \"deneme\", \"group\", \"account\", \"test\" CASCADE;")
+
 	// 3. Test Create with defaults (including UUID default uuid.New and Bool default true)
 	t.Log("Testing Create with defaults...")
 	deneme := models.NewDeneme(ctx, db)
@@ -307,8 +310,8 @@ func TestIntegration(t *testing.T) {
 	exprList := models.NewGroupList(ctx, db)
 	var countVal int
 	scanFunc, err := exprList.Aggregate(func(a *client.Aggregate) {
-		a.Count("COALESCE(name, 'default')", &countVal)
-		a.GroupBy("COALESCE(name, 'default')")
+		a.Count(client.Raw("COALESCE(name, 'default')"), &countVal)
+		a.GroupBy(client.Raw("COALESCE(name, 'default')"))
 	})
 	assert.NoError(t, err)
 	err = scanFunc()

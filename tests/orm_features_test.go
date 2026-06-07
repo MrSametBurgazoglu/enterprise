@@ -126,8 +126,8 @@ func TestAggregate_ExpressionAutoQuoting(t *testing.T) {
 	// Call aggregate with an expression (Bug 13)
 	var avgVal float64
 	_, err := list.Aggregate(func(a *client.Aggregate) {
-		a.Avg("DATE(created_at)", &avgVal)
-		a.GroupBy("DATE(created_at)")
+		a.Avg(client.Raw("DATE(created_at)"), &avgVal)
+		a.GroupBy(client.Raw("DATE(created_at)"))
 	})
 	assert.NoError(t, err)
 
@@ -135,4 +135,50 @@ func TestAggregate_ExpressionAutoQuoting(t *testing.T) {
 	assert.Contains(t, db.lastSQL, "AVG(DATE(created_at))")
 	assert.Contains(t, db.lastSQL, "GROUP BY DATE(created_at)")
 	assert.NotContains(t, db.lastSQL, "\"DATE(created_at)\"")
+}
+
+func TestValidation(t *testing.T) {
+	// 1. Valid identifier
+	assert.True(t, client.IsValidIdentifier("created_at"))
+	assert.True(t, client.IsValidIdentifier("accounts.id"))
+	assert.True(t, client.IsValidIdentifier("id"))
+	assert.True(t, client.IsValidIdentifier("*"))
+
+	// 2. Invalid identifier (SQL Injection surface)
+	assert.False(t, client.IsValidIdentifier("id; DROP TABLE accounts"))
+	assert.False(t, client.IsValidIdentifier("created_at DESC"))
+
+	// 3. Raw bypasses validation
+	assert.True(t, client.IsValidIdentifier(client.Raw("DATE(created_at)")))
+
+	// 4. Valid cast types
+	assert.True(t, client.IsValidCast("text"))
+	assert.True(t, client.IsValidCast("numeric"))
+	assert.True(t, client.IsValidCast("double precision"))
+	assert.True(t, client.IsValidCast("varchar(255)"))
+
+	// 5. Invalid cast types
+	assert.False(t, client.IsValidCast("text; DROP TABLE accounts"))
+
+	// 6. Panic verification
+	assert.Panics(t, func() {
+		client.ValidateIdentifier("id; DROP TABLE accounts")
+	})
+	assert.Panics(t, func() {
+		client.ValidateCast("text; DROP TABLE accounts")
+	})
+}
+
+func TestPaging(t *testing.T) {
+	// 1. Limit > 0, Skip > 0
+	p1 := client.Paging{Limit: 10, Skip: 5}
+	assert.Equal(t, "LIMIT 10 OFFSET 5", p1.String())
+
+	// 2. Limit <= 0, Skip > 0
+	p2 := client.Paging{Limit: 0, Skip: 5}
+	assert.Equal(t, "OFFSET 5", p2.String())
+
+	// 3. Limit <= 0, Skip == 0
+	p3 := client.Paging{Limit: -1, Skip: 0}
+	assert.Equal(t, "", p3.String())
 }

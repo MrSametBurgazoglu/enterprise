@@ -108,7 +108,7 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 	}
 
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s LIMIT 1;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
@@ -144,7 +144,10 @@ func CreateSelectListQuery(list []*WhereList, model Model, result Result, orders
 	for _, order := range orders {
 		orderStrings = append(orderStrings, order.String())
 	}
-	orderString := strings.Join(orderStrings, ", ")
+	orderString := ""
+	if len(orderStrings) > 0 {
+		orderString = "ORDER BY " + strings.Join(orderStrings, ", ")
+	}
 
 	pagingString := ""
 	if paging != nil {
@@ -200,11 +203,6 @@ func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model,
 	defer rows.Close()
 
 	err = ScanFirstRow(rows, model, selectedAddress)
-	if err != nil {
-		return err
-	}
-
-	err = ScanNextRows(rows, model, selectedAddress)
 	if err != nil {
 		return err
 	}
@@ -411,7 +409,7 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 
 	selectedNames := make([]string, len(aggregate.aggregateFields))
 	for i := 0; i < len(aggregate.aggregateFields); i++ {
-		field := aggregate.aggregateFields[i]
+		field := ValidateIdentifier(aggregate.aggregateFields[i])
 		if !strings.Contains(field, "\"") && field != "*" && !strings.ContainsAny(field, "() ,") {
 			field = fmt.Sprintf("\"%s\"", field)
 		}
@@ -420,7 +418,7 @@ func CreateAggregateQuery(list []*WhereList, model Model, aggregate *Aggregate) 
 
 	groupBys := make([]string, len(aggregate.groupByList))
 	for i := 0; i < len(aggregate.groupByList); i++ {
-		gb := aggregate.groupByList[i]
+		gb := ValidateIdentifier(aggregate.groupByList[i])
 		if !strings.Contains(gb, "\"") && !strings.ContainsAny(gb, "() ,") {
 			gb = fmt.Sprintf("\"%s\"", gb)
 		}
@@ -519,6 +517,9 @@ func (receiver *Client) ExistManyToManyRelation(ctx context.Context, relationshi
 }
 
 func CreateBulkInsertQuery(args pgx.NamedArgs, fieldsList []map[string]any, fieldsListList [][]string) (string, string) {
+	if len(fieldsListList) == 0 || len(fieldsList) == 0 {
+		return "", ""
+	}
 	var names []string
 	var values [][]string
 	for _, n := range fieldsListList[0] {
@@ -546,6 +547,9 @@ func CreateBulkInsertQuery(args pgx.NamedArgs, fieldsList []map[string]any, fiel
 }
 
 func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fieldsList []map[string]any, fieldsListList [][]string) error {
+	if len(fieldsList) == 0 || len(fieldsListList) == 0 {
+		return nil
+	}
 	args := pgx.NamedArgs{}
 
 	nameString, valueString := CreateBulkInsertQuery(args, fieldsList, fieldsListList)
@@ -562,7 +566,7 @@ func (receiver *Client) BulkCreate(ctx context.Context, tableName string, fields
 func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields map[string]any, fieldsList []string, idName string, idValue []any) error {
 	statements, args := CreateUpdateQuery(fields, fieldsList)
 
-	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE \"%s\" IN (@idvalue)", tableName, statements, idName)
+	sqlString := fmt.Sprintf("UPDATE \"%s\" SET %s WHERE \"%s\" = ANY(@idvalue)", tableName, statements, idName)
 
 	args["idvalue"] = idValue
 	_, err := receiver.Database.Exec(ctx, sqlString, args)
@@ -573,7 +577,7 @@ func (receiver *Client) BulkUpdate(ctx context.Context, tableName string, fields
 }
 
 func (receiver *Client) BulkDelete(ctx context.Context, tableName string, idName string, idValue []any) error {
-	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE \"%s\" IN (@idvalue);", tableName, idName)
+	sqlString := fmt.Sprintf("DELETE FROM \"%s\" WHERE \"%s\" = ANY(@idvalue);", tableName, idName)
 
 	args := pgx.NamedArgs{}
 	args["idvalue"] = idValue
@@ -607,7 +611,10 @@ func (receiver *Client) DistinctString(ctx context.Context, list []*WhereList, m
 	for _, order := range orders {
 		orderStrings = append(orderStrings, order.String())
 	}
-	orderString := strings.Join(orderStrings, ", ")
+	orderString := ""
+	if len(orderStrings) > 0 {
+		orderString = "ORDER BY " + strings.Join(orderStrings, ", ")
+	}
 
 	pagingString := ""
 	if paging != nil {

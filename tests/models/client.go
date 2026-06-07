@@ -32,29 +32,47 @@ type Database struct {
 }
 
 func (d *Database) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
-	commandTag, err = d.pool.Exec(ctx, sql, arguments[0])
+	commandTag, err = d.pool.Exec(ctx, sql, arguments...)
+	var namedArgs pgx.NamedArgs
+	if len(arguments) > 0 {
+		if na, ok := arguments[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
 	if err != nil {
-		d.Logger.LogError(ctx, sql, arguments[0].(pgx.NamedArgs), err)
+		d.Logger.LogError(ctx, sql, namedArgs, err)
 	} else if d.Options.Debug {
-		d.Logger.Log(ctx, sql, arguments[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return commandTag, err
 }
 
 func (d *Database) Query(ctx context.Context, sql string, args ...any) (rows pgx.Rows, err error) {
-	rows, err = d.pool.Query(ctx, sql, args[0])
+	rows, err = d.pool.Query(ctx, sql, args...)
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
 	if err != nil {
-		d.Logger.LogError(ctx, sql, args[0].(pgx.NamedArgs), err)
+		d.Logger.LogError(ctx, sql, namedArgs, err)
 	} else if d.Options.Debug {
-		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return rows, err
 }
 
 func (d *Database) QueryRow(ctx context.Context, sql string, args ...any) (row pgx.Row) {
-	row = d.pool.QueryRow(ctx, sql, args[0])
+	row = d.pool.QueryRow(ctx, sql, args...)
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
 	if d.Options.Debug {
-		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return row
 }

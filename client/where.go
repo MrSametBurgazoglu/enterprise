@@ -85,14 +85,16 @@ func (w *Where) GetName() string {
 }
 
 func (w *Where) Parse(tableName string, args pgx.NamedArgs) string {
+	name := ValidateIdentifier(w.Name)
+	cast := ValidateCast(w.Cast)
 	sqlFormat := w.Type
-	if w.Cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
-		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, w.Name, w.Cast)
+	if cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
+		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, name, cast)
 		sqlFormat = colRef + sqlFormat[len("\"%s\".\"%s\""):]
 		if !w.HasValue {
 			return sqlFormat
 		}
-		baseName := fmt.Sprintf("%s__%s", tableName, w.Name)
+		baseName := fmt.Sprintf("%s__%s", tableName, name)
 		paramName := ""
 		for idx := 1; ; idx++ {
 			candidate := fmt.Sprintf("%s_%d", baseName, idx)
@@ -106,10 +108,10 @@ func (w *Where) Parse(tableName string, args pgx.NamedArgs) string {
 	}
 
 	if !w.HasValue {
-		return fmt.Sprintf(w.Type, tableName, w.Name)
+		return fmt.Sprintf(w.Type, tableName, name)
 	}
 
-	baseName := fmt.Sprintf("%s__%s", tableName, w.Name)
+	baseName := fmt.Sprintf("%s__%s", tableName, name)
 	paramName := ""
 	for idx := 1; ; idx++ {
 		candidate := fmt.Sprintf("%s_%d", baseName, idx)
@@ -120,23 +122,25 @@ func (w *Where) Parse(tableName string, args pgx.NamedArgs) string {
 	}
 
 	args[paramName] = w.Value
-	return fmt.Sprintf(w.Type, tableName, w.Name, fmt.Sprintf("@%s", paramName))
+	return fmt.Sprintf(w.Type, tableName, name, fmt.Sprintf("@%s", paramName))
 }
 
 func (w *Where) GetSqlString(tableName string) string {
 	// Deprecated: kept for compatibility
+	name := ValidateIdentifier(w.Name)
+	cast := ValidateCast(w.Cast)
 	sqlFormat := w.Type
-	if w.Cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
-		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, w.Name, w.Cast)
+	if cast != "" && strings.HasPrefix(sqlFormat, "\"%s\".\"%s\"") {
+		colRef := fmt.Sprintf("(\"%s\".\"%s\")::%s", tableName, name, cast)
 		sqlFormat = colRef + sqlFormat[len("\"%s\".\"%s\""):]
 		if w.HasValue {
-			return fmt.Sprintf(sqlFormat, fmt.Sprintf("@%s__%s", tableName, w.Name))
+			return fmt.Sprintf(sqlFormat, fmt.Sprintf("@%s__%s", tableName, name))
 		}
 		return sqlFormat
 	}
 	if w.HasValue {
-		return fmt.Sprintf(w.Type, tableName, w.Name, fmt.Sprintf("@%s__%s", tableName, w.Name))
+		return fmt.Sprintf(w.Type, tableName, name, fmt.Sprintf("@%s__%s", tableName, name))
 	} else {
-		return fmt.Sprintf(w.Type, tableName, w.Name)
+		return fmt.Sprintf(w.Type, tableName, name)
 	}
 }

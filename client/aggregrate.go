@@ -53,7 +53,7 @@ func (a *Aggregate) Sum(field string, value any) *Aggregate {
 }
 
 func (a *Aggregate) SumCast(field string, cast string, value any) *Aggregate {
-	a.aggregateFormats = append(a.aggregateFormats, fmt.Sprintf("SUM(CAST(%%s AS %s))", cast))
+	a.aggregateFormats = append(a.aggregateFormats, fmt.Sprintf("SUM(CAST(%%s AS %s))", ValidateCast(cast)))
 	a.addField(field, value)
 	return a
 }
@@ -65,7 +65,7 @@ func (a *Aggregate) Avg(field string, value any) *Aggregate {
 }
 
 func (a *Aggregate) AvgCast(field string, cast string, value any) *Aggregate {
-	a.aggregateFormats = append(a.aggregateFormats, fmt.Sprintf("AVG(CAST(%%s AS %s))", cast))
+	a.aggregateFormats = append(a.aggregateFormats, fmt.Sprintf("AVG(CAST(%%s AS %s))", ValidateCast(cast)))
 	a.addField(field, value)
 	return a
 }
