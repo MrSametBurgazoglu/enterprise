@@ -1,7 +1,10 @@
 package db_models
 
 import (
+	"reflect"
+
 	"github.com/MrSametBurgazoglu/enterprise/models"
+	"github.com/MrSametBurgazoglu/enterprise/tests/custom_data_type"
 	"github.com/google/uuid"
 )
 
@@ -16,6 +19,7 @@ func Account() *models.Table {
 			models.StringField("Status").Default("active"),
 			models.UUIDField("DenemeID").SetNillable(),
 			models.UintField("Serial").AddSerial(),
+			models.EnumField("Role", []string{"admin", "user"}).GoType(reflect.TypeOf(custom_data_type.UserRole(""))).Default("user"),
 		},
 		Relations: []*models.Relation{
 			models.ManyToOne(DenemeName, idField.DBName, "deneme_id"),

@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -72,5 +73,20 @@ func EnumField(name string, values []string) *EnumDBField {
 
 func (s *EnumDBField) SetDBName(v string) *EnumDBField {
 	s.DBName = v
+	return s
+}
+
+func (s *EnumDBField) GoType(t reflect.Type) *EnumDBField {
+	pkg := t.PkgPath()
+	if pkg != "" {
+		lastPackage := pkg[strings.LastIndex(pkg, "/")+1:]
+		s.Field.Type = fmt.Sprintf("%s.%s", lastPackage, t.Name())
+		s.Field.BaseType = s.Field.Type
+		s.Field.RequiredPackages = append(s.Field.RequiredPackages, pkg)
+	} else {
+		s.Field.Type = t.Name()
+		s.Field.BaseType = s.Field.Type
+	}
+	s.HaveCustomType = false // prevent generating Enum definition locally in schema struct template
 	return s
 }

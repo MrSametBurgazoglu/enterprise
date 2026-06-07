@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -793,4 +794,31 @@ func (receiver *Client) AggregateRows(ctx context.Context, list []*WhereList, mo
 	}
 
 	return scanNext, closeRows, nil
+}
+
+func (receiver *Client) AggregateRowsSeq(ctx context.Context, list []*WhereList, model Model, aggregate *Aggregate) iter.Seq2[int, error] {
+	return func(yield func(int, error) bool) {
+		sqlString, args := CreateAggregateQuery(list, model, aggregate)
+		rows, err := receiver.Database.Query(ctx, sqlString, args)
+		if err != nil {
+			yield(0, err)
+			return
+		}
+		defer rows.Close()
+
+		idx := 0
+		for rows.Next() {
+			err := rows.Scan(aggregate.aggregateValues...)
+			if !yield(idx, err) {
+				return
+			}
+			if err != nil {
+				return
+			}
+			idx++
+		}
+		if err := rows.Err(); err != nil {
+			yield(idx, err)
+		}
+	}
 }

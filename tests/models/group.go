@@ -3,6 +3,7 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
@@ -544,6 +545,33 @@ func (t *Group) WhereIn(cond bool, w client.PredicateI) *Group {
 	return t
 }
 
+func (t *Group) WhereIfFn(cond bool, fn func() client.PredicateI) *Group {
+	t.GroupPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Group) Select(fields ...string) *Group {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case GroupTableIDField:
+			t.result.SelectID()
+
+		case GroupTableNameField:
+			t.result.SelectName()
+
+		case GroupTableSurnameField:
+			t.result.SelectSurname()
+
+		case GroupTableDataField:
+			t.result.SelectData()
+
+		}
+	}
+	return t
+}
+
 func (t *Group) Get() error {
 	return databaseGroupOperationHook(
 		t.ctx,
@@ -769,6 +797,82 @@ func (t *GroupList) OrderDesc(field string) *GroupList {
 func (t *GroupList) Paging(skip, limit int) *GroupList {
 	t.paging = &client.Paging{Skip: skip, Limit: limit}
 	return t
+}
+
+func (t *GroupList) WhereIfFn(cond bool, fn func() client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *GroupList) Select(fields ...string) *GroupList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case GroupTableIDField:
+			t.result.SelectID()
+
+		case GroupTableNameField:
+			t.result.SelectName()
+
+		case GroupTableSurnameField:
+			t.result.SelectSurname()
+
+		case GroupTableDataField:
+			t.result.SelectData()
+
+		}
+	}
+	return t
+}
+
+func (t *GroupList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *GroupList) GetByIDs(ids ...uuid.UUID) ([]*Group, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *GroupList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Group, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Group, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *GroupList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *GroupList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 type GroupResult struct {

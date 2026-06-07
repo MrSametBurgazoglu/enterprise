@@ -3,6 +3,7 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
@@ -635,6 +636,36 @@ func (t *Deneme) WhereIn(cond bool, w client.PredicateI) *Deneme {
 	return t
 }
 
+func (t *Deneme) WhereIfFn(cond bool, fn func() client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Deneme) Select(fields ...string) *Deneme {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case DenemeTableIDField:
+			t.result.SelectID()
+
+		case DenemeTableTestIDField:
+			t.result.SelectTestID()
+
+		case DenemeTableCountField:
+			t.result.SelectCount()
+
+		case DenemeTableIsActiveField:
+			t.result.SelectIsActive()
+
+		case DenemeTableDenemeTypeField:
+			t.result.SelectDenemeType()
+
+		}
+	}
+	return t
+}
+
 func (t *Deneme) Get() error {
 	return databaseDenemeOperationHook(
 		t.ctx,
@@ -860,6 +891,85 @@ func (t *DenemeList) OrderDesc(field string) *DenemeList {
 func (t *DenemeList) Paging(skip, limit int) *DenemeList {
 	t.paging = &client.Paging{Skip: skip, Limit: limit}
 	return t
+}
+
+func (t *DenemeList) WhereIfFn(cond bool, fn func() client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *DenemeList) Select(fields ...string) *DenemeList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case DenemeTableIDField:
+			t.result.SelectID()
+
+		case DenemeTableTestIDField:
+			t.result.SelectTestID()
+
+		case DenemeTableCountField:
+			t.result.SelectCount()
+
+		case DenemeTableIsActiveField:
+			t.result.SelectIsActive()
+
+		case DenemeTableDenemeTypeField:
+			t.result.SelectDenemeType()
+
+		}
+	}
+	return t
+}
+
+func (t *DenemeList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *DenemeList) GetByIDs(ids ...uuid.UUID) ([]*Deneme, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *DenemeList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Deneme, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Deneme, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *DenemeList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *DenemeList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 type DenemeResult struct {

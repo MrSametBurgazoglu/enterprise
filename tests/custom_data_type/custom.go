@@ -24,3 +24,10 @@ func (c Custom) Scan(src any) (err error) {
 func (c Custom) Value() (driver.Value, error) {
 	return fmt.Sprintf("(%q,%q)", c.Hello, c.World), nil
 }
+
+type UserRole string
+
+const (
+	UserRoleAdmin UserRole = "admin"
+	UserRoleUser  UserRole = "user"
+)

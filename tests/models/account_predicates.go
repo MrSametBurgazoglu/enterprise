@@ -4,6 +4,7 @@ package models
 import "github.com/MrSametBurgazoglu/enterprise/client"
 
 import "github.com/google/uuid"
+import "github.com/MrSametBurgazoglu/enterprise/tests/custom_data_type"
 import "strings"
 
 type AccountPredicate struct {
@@ -39,6 +40,16 @@ func (t *AccountPredicate) WhereIn(cond bool, w client.PredicateI) *AccountPredi
 			t.where = append(t.where, &client.WhereList{})
 		}
 		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *AccountPredicate) WhereIfFn(cond bool, fn func() client.PredicateI) *AccountPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, fn())
 	}
 	return t
 }
@@ -92,6 +103,15 @@ func (t *AccountPredicate) IsSerialEqual(v uint) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,
 		Name:     AccountTableSerialField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsRoleEqual(v custom_data_type.UserRole) *client.Where {
+	return &client.Where{
+		Type:     client.EQ,
+		Name:     AccountTableRoleField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -151,6 +171,15 @@ func (t *AccountPredicate) IsSerialNotEqual(v uint) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsRoleNotEqual(v custom_data_type.UserRole) *client.Where {
+	return &client.Where{
+		Type:     client.NEQ,
+		Name:     AccountTableRoleField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsIDIN(v ...uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.ANY,
@@ -205,6 +234,15 @@ func (t *AccountPredicate) IsSerialIN(v ...uint) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsRoleIN(v ...custom_data_type.UserRole) *client.Where {
+	return &client.Where{
+		Type:     client.ANY,
+		Name:     AccountTableRoleField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsIDNotIN(v ...uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
@@ -254,6 +292,15 @@ func (t *AccountPredicate) IsSerialNotIN(v ...uint) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
 		Name:     AccountTableSerialField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsRoleNotIN(v ...custom_data_type.UserRole) *client.Where {
+	return &client.Where{
+		Type:     client.NANY,
+		Name:     AccountTableRoleField,
 		HasValue: true,
 		Value:    v,
 	}

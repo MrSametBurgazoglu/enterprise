@@ -3,10 +3,12 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
 
+	"github.com/MrSametBurgazoglu/enterprise/tests/custom_data_type"
 	"github.com/google/uuid"
 )
 
@@ -19,6 +21,7 @@ const (
 	AccountTableStatusField   string = "status"
 	AccountTableDenemeIDField string = "deneme_id"
 	AccountTableSerialField   string = "serial"
+	AccountTableRoleField     string = "role"
 )
 
 var databaseAccountOperationHook = func(ctx context.Context, operationInfo *client.OperationInfo, model *Account, operationFunc func() error) error {
@@ -67,6 +70,8 @@ type Account struct {
 	denemeid *uuid.UUID
 
 	serial uint
+
+	role custom_data_type.UserRole
 
 	changedFields     map[string]any
 	changedFieldsList []string
@@ -384,6 +389,10 @@ func (t *Account) SetSerial(v uint) {
 	t.serial = v
 	t.SetSerialField()
 }
+func (t *Account) SetRole(v custom_data_type.UserRole) {
+	t.role = v
+	t.SetRoleField()
+}
 
 func (t *Account) SetDenemeIDValue(v uuid.UUID) {
 	t.SetDenemeID(&v)
@@ -420,6 +429,12 @@ func (t *Account) SetSerialNillable(v *uint) {
 		return
 	}
 	t.SetSerial(*v)
+}
+func (t *Account) SetRoleNillable(v *custom_data_type.UserRole) {
+	if v == nil {
+		return
+	}
+	t.SetRole(*v)
 }
 
 func (t *Account) ParseID(v string) error {
@@ -470,6 +485,9 @@ func (t *Account) GetStatusNillable() *string {
 func (t *Account) GetSerialNillable() *uint {
 	return &t.serial
 }
+func (t *Account) GetRoleNillable() *custom_data_type.UserRole {
+	return &t.role
+}
 
 func (t *Account) NameIN(v ...string) bool {
 	return slices.Contains(v, t.name)
@@ -487,6 +505,10 @@ func (t *Account) SerialIN(v ...uint) bool {
 	return slices.Contains(v, t.serial)
 }
 
+func (t *Account) RoleIN(v ...custom_data_type.UserRole) bool {
+	return slices.Contains(v, t.role)
+}
+
 func (t *Account) NameNotIN(v ...string) bool {
 	return !slices.Contains(v, t.name)
 }
@@ -501,6 +523,10 @@ func (t *Account) StatusNotIN(v ...string) bool {
 
 func (t *Account) SerialNotIN(v ...uint) bool {
 	return !slices.Contains(v, t.serial)
+}
+
+func (t *Account) RoleNotIN(v ...custom_data_type.UserRole) bool {
+	return !slices.Contains(v, t.role)
 }
 
 func (t *Account) GetID() uuid.UUID {
@@ -534,6 +560,10 @@ func (t *Account) GetDenemeIDValue() uuid.UUID {
 
 func (t *Account) GetSerial() uint {
 	return t.serial
+}
+
+func (t *Account) GetRole() custom_data_type.UserRole {
+	return t.role
 }
 
 func (t *Account) SetIDField() {
@@ -575,6 +605,13 @@ func (t *Account) SetSerialField() {
 	if _, exist := t.changedFields[AccountTableSerialField]; !exist {
 		t.changedFields[AccountTableSerialField] = t.serial
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableSerialField)
+	}
+
+}
+func (t *Account) SetRoleField() {
+	if _, exist := t.changedFields[AccountTableRoleField]; !exist {
+		t.changedFields[AccountTableRoleField] = t.role
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableRoleField)
 	}
 
 }
@@ -733,6 +770,12 @@ func (t *Account) SetDefaults() {
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableStatusField)
 	}
 
+	if _, exist := t.changedFields[AccountTableRoleField]; !exist {
+		t.role = "user"
+		t.changedFields[AccountTableRoleField] = t.role
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableRoleField)
+	}
+
 	v := &client.SelectedField{Name: AccountTableSerialField, Value: &t.serial}
 	t.serialFields = append(t.serialFields, v)
 
@@ -761,6 +804,7 @@ func (t *Account) ScanResult() {
 	t.status = t.result.status
 	t.denemeid = t.result.denemeid
 	t.serial = t.result.serial
+	t.role = t.result.role
 
 	if _, ok := t.relations.RelationMap["deneme"]; ok {
 		if t.Deneme == nil {
@@ -817,6 +861,42 @@ func (t *Account) WhereIf(cond bool, w client.PredicateI) *Account {
 
 func (t *Account) WhereIn(cond bool, w client.PredicateI) *Account {
 	t.AccountPredicate.WhereIn(cond, w)
+	return t
+}
+
+func (t *Account) WhereIfFn(cond bool, fn func() client.PredicateI) *Account {
+	t.AccountPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Account) Select(fields ...string) *Account {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case AccountTableIDField:
+			t.result.SelectID()
+
+		case AccountTableNameField:
+			t.result.SelectName()
+
+		case AccountTableSurnameField:
+			t.result.SelectSurname()
+
+		case AccountTableStatusField:
+			t.result.SelectStatus()
+
+		case AccountTableDenemeIDField:
+			t.result.SelectDenemeID()
+
+		case AccountTableSerialField:
+			t.result.SelectSerial()
+
+		case AccountTableRoleField:
+			t.result.SelectRole()
+
+		}
+	}
 	return t
 }
 
@@ -1047,6 +1127,91 @@ func (t *AccountList) Paging(skip, limit int) *AccountList {
 	return t
 }
 
+func (t *AccountList) WhereIfFn(cond bool, fn func() client.PredicateI) *AccountList {
+	t.AccountPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *AccountList) Select(fields ...string) *AccountList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case AccountTableIDField:
+			t.result.SelectID()
+
+		case AccountTableNameField:
+			t.result.SelectName()
+
+		case AccountTableSurnameField:
+			t.result.SelectSurname()
+
+		case AccountTableStatusField:
+			t.result.SelectStatus()
+
+		case AccountTableDenemeIDField:
+			t.result.SelectDenemeID()
+
+		case AccountTableSerialField:
+			t.result.SelectSerial()
+
+		case AccountTableRoleField:
+			t.result.SelectRole()
+
+		}
+	}
+	return t
+}
+
+func (t *AccountList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *AccountList) GetByIDs(ids ...uuid.UUID) ([]*Account, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *AccountList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Account, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Account, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *AccountList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *AccountList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
 type AccountResult struct {
 	id       uuid.UUID
 	name     string
@@ -1054,6 +1219,7 @@ type AccountResult struct {
 	status   string
 	denemeid *uuid.UUID
 	serial   uint
+	role     custom_data_type.UserRole
 
 	selectedFields []*client.SelectedField
 
@@ -1114,6 +1280,11 @@ func (t *AccountResult) SelectSerial() {
 	t.selectedFields = append(t.selectedFields, v)
 }
 
+func (t *AccountResult) SelectRole() {
+	v := &client.SelectedField{Name: AccountTableRoleField, Value: &t.role}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
 func (t *AccountResult) GetDBName() string {
 	return AccountTableName
 }
@@ -1125,6 +1296,7 @@ func (t *AccountResult) SelectAll() {
 	t.SelectStatus()
 	t.SelectDenemeID()
 	t.SelectSerial()
+	t.SelectRole()
 
 }
 

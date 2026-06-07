@@ -43,6 +43,16 @@ func (t *GroupPredicate) WhereIn(cond bool, w client.PredicateI) *GroupPredicate
 	return t
 }
 
+func (t *GroupPredicate) WhereIfFn(cond bool, fn func() client.PredicateI) *GroupPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, fn())
+	}
+	return t
+}
+
 func (t *GroupPredicate) IsIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,

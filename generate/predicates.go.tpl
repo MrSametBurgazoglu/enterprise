@@ -43,6 +43,16 @@ func (t *{{$.TableName}}Predicate) WhereIn(cond bool, w client.PredicateI) *{{$.
 	return t
 }
 
+func (t *{{$.TableName}}Predicate) WhereIfFn(cond bool, fn func() client.PredicateI) *{{$.TableName}}Predicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, fn())
+	}
+	return t
+}
+
 {{range .Fields}}
 func (t *{{$.TableName}}Predicate) Is{{.GetName}}Equal(v {{.GetBaseType}}) *client.Where{
     return &client.Where{

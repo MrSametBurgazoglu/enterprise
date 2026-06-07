@@ -3,6 +3,7 @@ package models
 
 import (
 "context"
+"iter"
 {{range .InternalRequiredPackages}}
 "{{.}}"{{end}}
 "github.com/MrSametBurgazoglu/enterprise/client"
@@ -515,6 +516,24 @@ func (t *{{.TableName}}) WhereIn(cond bool, w client.PredicateI) *{{.TableName}}
 	return t
 }
 
+func (t *{{.TableName}}) WhereIfFn(cond bool, fn func() client.PredicateI) *{{.TableName}} {
+	t.{{.TableName}}Predicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *{{.TableName}}) Select(fields ...string) *{{.TableName}} {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+		{{range .Fields}}
+		case {{$.TableName}}Table{{.GetName}}Field:
+			t.result.Select{{.GetName}}()
+		{{end}}
+		}
+	}
+	return t
+}
+
 func (t *{{.TableName}}) Get() error{
     return database{{.TableName}}OperationHook(
         t.ctx,
@@ -741,6 +760,73 @@ func (t *{{.TableName}}List) OrderDesc(field string) *{{.TableName}}List{
 func (t *{{.TableName}}List) Paging(skip, limit int) *{{.TableName}}List{
     t.paging = &client.Paging{Skip:skip, Limit:limit}
     return t
+}
+
+func (t *{{.TableName}}List) WhereIfFn(cond bool, fn func() client.PredicateI) *{{.TableName}}List {
+	t.{{.TableName}}Predicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *{{.TableName}}List) Select(fields ...string) *{{.TableName}}List {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+		{{range .Fields}}
+		case {{$.TableName}}Table{{.GetName}}Field:
+			t.result.Select{{.GetName}}()
+		{{end}}
+		}
+	}
+	return t
+}
+
+func (t *{{.TableName}}List) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *{{.TableName}}List) GetByIDs(ids ...{{.IDFieldType}}) ([]*{{.TableName}}, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *{{.TableName}}List) GetByIDsMap(ids ...{{.IDFieldType}}) (map[{{.IDFieldType}}]*{{.TableName}}, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[{{.IDFieldType}}]*{{.TableName}}, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *{{.TableName}}List) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *{{.TableName}}List) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 
