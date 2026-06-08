@@ -144,6 +144,10 @@ func (t *TestList) GetDBName() string {
 	return TestTableName
 }
 
+func (t *TestList) IsListModel() bool {
+	return true
+}
+
 func (t *TestList) GetRelationList() *client.RelationList {
 	return t.relations
 }

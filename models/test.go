@@ -3,6 +3,7 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
@@ -143,6 +144,10 @@ func (t *TestList) GetDBName() string {
 	return TestTableName
 }
 
+func (t *TestList) IsListModel() bool {
+	return true
+}
+
 func (t *TestList) GetRelationList() *client.RelationList {
 	return t.relations
 }
@@ -233,6 +238,54 @@ func (t *TestList) MaxType() (string, error) {
 	var val string
 	a := new(client.Aggregate)
 	a.Max(TestTableTypeField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) SumName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(TestTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) AvgName() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(TestTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) SumType() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(TestTableTypeField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *TestList) AvgType() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(TestTableTypeField, "numeric", &val)
 	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
 	if err != nil {
 		return val, err
@@ -594,6 +647,49 @@ func (t *Test) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Test) WhereIf(cond bool, w client.PredicateI) *Test {
+	t.TestPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Test) WhereIn(cond bool, w client.PredicateI) *Test {
+	t.TestPredicate.WhereIn(cond, w)
+	return t
+}
+
+func (t *Test) WhereIfFn(cond bool, fn func() client.PredicateI) *Test {
+	t.TestPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Test) Select(fields ...string) *Test {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case TestTableIDField:
+			t.result.SelectID()
+
+		case TestTableNameField:
+			t.result.SelectName()
+
+		case TestTableCreatedAtField:
+			t.result.SelectCreatedAt()
+
+		case TestTableInfoField:
+			t.result.SelectInfo()
+
+		case TestTableTypeField:
+			t.result.SelectType()
+
+		case TestTableMetadataField:
+			t.result.SelectMetadata()
+
+		}
+	}
+	return t
+}
+
 func (t *Test) Get() error {
 	return databaseTestOperationHook(
 		t.ctx,
@@ -679,10 +775,39 @@ func (t *TestList) List() error {
 	)
 }
 
+func (t *TestList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *TestList) WhereIf(cond bool, w client.PredicateI) *TestList {
+	t.TestPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *TestList) WhereIn(cond bool, w client.PredicateI) *TestList {
+	t.TestPredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *TestList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *TestList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
 }
 
 func (t *TestList) Create(list ...*Test) error {
@@ -741,6 +866,42 @@ func (t *TestList) Delete(list ...*Test) error {
 	)
 }
 
+func (t *TestList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseTestListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, TestTableName, t.where, t, TestTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *TestList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseTestListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			TestTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, TestTableName, set, t.where, t, TestTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
 func (t *TestList) Order(field string) *TestList {
 	t.order = append(t.order, &client.Order{Field: field})
 	return t
@@ -754,6 +915,88 @@ func (t *TestList) OrderDesc(field string) *TestList {
 func (t *TestList) Paging(skip, limit int) *TestList {
 	t.paging = &client.Paging{Skip: skip, Limit: limit}
 	return t
+}
+
+func (t *TestList) WhereIfFn(cond bool, fn func() client.PredicateI) *TestList {
+	t.TestPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *TestList) Select(fields ...string) *TestList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case TestTableIDField:
+			t.result.SelectID()
+
+		case TestTableNameField:
+			t.result.SelectName()
+
+		case TestTableCreatedAtField:
+			t.result.SelectCreatedAt()
+
+		case TestTableInfoField:
+			t.result.SelectInfo()
+
+		case TestTableTypeField:
+			t.result.SelectType()
+
+		case TestTableMetadataField:
+			t.result.SelectMetadata()
+
+		}
+	}
+	return t
+}
+
+func (t *TestList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *TestList) GetByIDs(ids ...uuid.UUID) ([]*Test, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *TestList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Test, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Test, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *TestList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *TestList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 type TestResult struct {

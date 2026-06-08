@@ -136,6 +136,10 @@ func (t *GroupList) GetDBName() string {
 	return GroupTableName
 }
 
+func (t *GroupList) IsListModel() bool {
+	return true
+}
+
 func (t *GroupList) GetRelationList() *client.RelationList {
 	return t.relations
 }

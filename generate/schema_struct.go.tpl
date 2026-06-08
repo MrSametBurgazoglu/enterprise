@@ -141,6 +141,10 @@ func (t *{{$.TableName}}List) GetDBName() string{
     return {{.TableName}}TableName
 }
 
+func (t *{{$.TableName}}List) IsListModel() bool {
+    return true
+}
+
 func (t *{{$.TableName}}List) GetRelationList() *client.RelationList{
     return t.relations
 }

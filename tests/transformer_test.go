@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"ariga.io/atlas/sql/schema"
+	"github.com/MrSametBurgazoglu/enterprise/client"
 	"github.com/MrSametBurgazoglu/enterprise/migrate"
 	"github.com/MrSametBurgazoglu/enterprise/models"
 	testmodels "github.com/MrSametBurgazoglu/enterprise/tests/models"
@@ -144,4 +145,19 @@ func TestGeneratedModel_Prepare(t *testing.T) {
 	assert.NotNil(t, metadataVal)
 	assert.NotNil(t, *metadataVal)
 	assert.NotNil(t, **metadataVal)
+}
+
+func TestGetWithHasManyRelationsLimit(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Without relations:
+	testModelWithoutRel := testmodels.NewTest(ctx, nil)
+	sqlWithout, _, _ := client.CreateSelectQuery(nil, testModelWithoutRel, testModelWithoutRel.GetSelector())
+	assert.Contains(t, sqlWithout, "LIMIT 1")
+
+	// 2. With relation (to-many):
+	testModelWithRel := testmodels.NewTest(ctx, nil)
+	testModelWithRel.WithDenemeList()
+	sqlWith, _, _ := client.CreateSelectQuery(nil, testModelWithRel, testModelWithRel.GetSelector())
+	assert.NotContains(t, sqlWith, "LIMIT 1")
 }

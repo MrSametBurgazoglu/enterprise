@@ -19,3 +19,7 @@ type Result interface {
 	GetRelations() []Result
 	IsExist() bool
 }
+
+type ListModel interface {
+	IsListModel() bool
+}

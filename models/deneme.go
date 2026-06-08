@@ -3,6 +3,7 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
@@ -144,6 +145,10 @@ type DenemeList struct {
 
 func (t *DenemeList) GetDBName() string {
 	return DenemeTableName
+}
+
+func (t *DenemeList) IsListModel() bool {
+	return true
 }
 
 func (t *DenemeList) GetRelationList() *client.RelationList {
@@ -625,6 +630,46 @@ func (t *Deneme) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Deneme) WhereIf(cond bool, w client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Deneme) WhereIn(cond bool, w client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIn(cond, w)
+	return t
+}
+
+func (t *Deneme) WhereIfFn(cond bool, fn func() client.PredicateI) *Deneme {
+	t.DenemePredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Deneme) Select(fields ...string) *Deneme {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case DenemeTableIDField:
+			t.result.SelectID()
+
+		case DenemeTableTestIDField:
+			t.result.SelectTestID()
+
+		case DenemeTableCountField:
+			t.result.SelectCount()
+
+		case DenemeTableIsActiveField:
+			t.result.SelectIsActive()
+
+		case DenemeTableDenemeTypeField:
+			t.result.SelectDenemeType()
+
+		}
+	}
+	return t
+}
+
 func (t *Deneme) Get() error {
 	return databaseDenemeOperationHook(
 		t.ctx,
@@ -710,10 +755,39 @@ func (t *DenemeList) List() error {
 	)
 }
 
+func (t *DenemeList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *DenemeList) WhereIf(cond bool, w client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *DenemeList) WhereIn(cond bool, w client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *DenemeList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *DenemeList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
 }
 
 func (t *DenemeList) Create(list ...*Deneme) error {
@@ -772,6 +846,42 @@ func (t *DenemeList) Delete(list ...*Deneme) error {
 	)
 }
 
+func (t *DenemeList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseDenemeListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, DenemeTableName, t.where, t, DenemeTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *DenemeList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseDenemeListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			DenemeTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, DenemeTableName, set, t.where, t, DenemeTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
 func (t *DenemeList) Order(field string) *DenemeList {
 	t.order = append(t.order, &client.Order{Field: field})
 	return t
@@ -785,6 +895,85 @@ func (t *DenemeList) OrderDesc(field string) *DenemeList {
 func (t *DenemeList) Paging(skip, limit int) *DenemeList {
 	t.paging = &client.Paging{Skip: skip, Limit: limit}
 	return t
+}
+
+func (t *DenemeList) WhereIfFn(cond bool, fn func() client.PredicateI) *DenemeList {
+	t.DenemePredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *DenemeList) Select(fields ...string) *DenemeList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case DenemeTableIDField:
+			t.result.SelectID()
+
+		case DenemeTableTestIDField:
+			t.result.SelectTestID()
+
+		case DenemeTableCountField:
+			t.result.SelectCount()
+
+		case DenemeTableIsActiveField:
+			t.result.SelectIsActive()
+
+		case DenemeTableDenemeTypeField:
+			t.result.SelectDenemeType()
+
+		}
+	}
+	return t
+}
+
+func (t *DenemeList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *DenemeList) GetByIDs(ids ...uuid.UUID) ([]*Deneme, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *DenemeList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Deneme, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Deneme, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *DenemeList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *DenemeList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 type DenemeResult struct {

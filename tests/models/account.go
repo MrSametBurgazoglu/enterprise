@@ -147,6 +147,10 @@ func (t *AccountList) GetDBName() string {
 	return AccountTableName
 }
 
+func (t *AccountList) IsListModel() bool {
+	return true
+}
+
 func (t *AccountList) GetRelationList() *client.RelationList {
 	return t.relations
 }

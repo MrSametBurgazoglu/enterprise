@@ -85,6 +85,17 @@ func createTableRelationWhereSql(model Model, args pgx.NamedArgs) (string, []str
 	return sqlString, relationWhereStrings
 }
 
+func isHasManyRelation(rel *Relation) bool {
+	if rel.ManyToManyTable != "" {
+		return true
+	}
+	if rel.RelationModel == nil {
+		return false
+	}
+	_, ok := rel.RelationModel.(ListModel)
+	return ok
+}
+
 func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, []any, pgx.NamedArgs) {
 	var selectedNames []string
 	var selectedAddress []any
@@ -108,12 +119,28 @@ func CreateSelectQuery(list []*WhereList, model Model, result Result) (string, [
 		summedWhereString = fmt.Sprintf(" WHERE (%s)", strings.Join(allWhereStrings, " AND "))
 	}
 
+	hasHasMany := false
+	if model.GetRelationList() != nil {
+		for _, rel := range model.GetRelationList().Relations {
+			if isHasManyRelation(rel) {
+				hasHasMany = true
+				break
+			}
+		}
+	}
+
+	limitStr := " LIMIT 1"
+	if hasHasMany {
+		limitStr = ""
+	}
+
 	names := strings.Join(selectedNames, ", ")
-	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s LIMIT 1;",
+	sqlString := fmt.Sprintf("SELECT %s FROM \"%s\" %s%s%s;",
 		names,
 		model.GetDBName(),
 		relationSqlString,
-		summedWhereString)
+		summedWhereString,
+		limitStr)
 
 	return sqlString, selectedAddress, args
 }
@@ -206,6 +233,23 @@ func (receiver *Client) Get(ctx context.Context, list []*WhereList, model Model,
 	err = ScanFirstRow(rows, model, selectedAddress)
 	if err != nil {
 		return err
+	}
+
+	hasHasMany := false
+	if model.GetRelationList() != nil {
+		for _, rel := range model.GetRelationList().Relations {
+			if isHasManyRelation(rel) {
+				hasHasMany = true
+				break
+			}
+		}
+	}
+
+	if hasHasMany {
+		err = ScanNextRows(rows, model, selectedAddress)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

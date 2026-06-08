@@ -23,6 +23,36 @@ func (t *GroupPredicate) ORWhere(w ...client.PredicateI) {
 	t.where = append(t.where, wl)
 }
 
+func (t *GroupPredicate) WhereIf(cond bool, w client.PredicateI) *GroupPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *GroupPredicate) WhereIn(cond bool, w client.PredicateI) *GroupPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *GroupPredicate) WhereIfFn(cond bool, fn func() client.PredicateI) *GroupPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, fn())
+	}
+	return t
+}
+
 func (t *GroupPredicate) IsIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,
@@ -167,10 +197,31 @@ func (t *GroupPredicate) IsDataNotIN(v ...map[string]any) *client.Where {
 	}
 }
 
-func (t *GroupPredicate) IsNameLike(v string) *client.Where {
+func (t *GroupPredicate) IsIDLike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
-		Name:     GroupTableNameField,
+		Name:     GroupTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     GroupTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *GroupPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: GroupTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -178,8 +229,9 @@ func (t *GroupPredicate) IsNameLike(v string) *client.Where {
 
 func (t *GroupPredicate) IsNameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     GroupTableNameField,
+		Type: client.ILIKE,
+		Name: GroupTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -187,8 +239,9 @@ func (t *GroupPredicate) IsNameILike(v string) *client.Where {
 
 func (t *GroupPredicate) IsSurnameLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     GroupTableSurnameField,
+		Type: client.LIKE,
+		Name: GroupTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -196,8 +249,9 @@ func (t *GroupPredicate) IsSurnameLike(v string) *client.Where {
 
 func (t *GroupPredicate) IsSurnameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     GroupTableSurnameField,
+		Type: client.ILIKE,
+		Name: GroupTableSurnameField,
+
 		HasValue: true,
 		Value:    v,
 	}

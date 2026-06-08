@@ -107,4 +107,6 @@ BenchmarkGormReadSingleField-4                      2036            515719 ns/op
 BenchmarkSqlxReadSingleField-4                      1242           1015917 ns/op             792 B/op         22 allocs/op
 ````
 
+For AI agents and LLMs integration instructions, please read [ai_usage_guide.md](file:///home/sametburgazoglu/Projects/enterprise-orm/enterprise/ai_usage_guide.md).
+
 For documentation visit https://mrsametburgazoglu.github.io/enterprise_docs/

@@ -147,6 +147,10 @@ func (t *DenemeList) GetDBName() string {
 	return DenemeTableName
 }
 
+func (t *DenemeList) IsListModel() bool {
+	return true
+}
+
 func (t *DenemeList) GetRelationList() *client.RelationList {
 	return t.relations
 }

@@ -25,6 +25,36 @@ func (t *TestPredicate) ORWhere(w ...client.PredicateI) {
 	t.where = append(t.where, wl)
 }
 
+func (t *TestPredicate) WhereIf(cond bool, w client.PredicateI) *TestPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *TestPredicate) WhereIn(cond bool, w client.PredicateI) *TestPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, w)
+	}
+	return t
+}
+
+func (t *TestPredicate) WhereIfFn(cond bool, fn func() client.PredicateI) *TestPredicate {
+	if cond {
+		if len(t.where) == 0 {
+			t.where = append(t.where, &client.WhereList{})
+		}
+		t.where[0].Items = append(t.where[0].Items, fn())
+	}
+	return t
+}
+
 func (t *TestPredicate) IsIDEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.EQ,
@@ -241,10 +271,31 @@ func (t *TestPredicate) IsMetadataNotIN(v ...map[string]any) *client.Where {
 	}
 }
 
-func (t *TestPredicate) IsNameLike(v string) *client.Where {
+func (t *TestPredicate) IsIDLike(v string) *client.Where {
 	return &client.Where{
 		Type:     client.LIKE,
-		Name:     TestTableNameField,
+		Name:     TestTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *TestPredicate) IsIDILike(v string) *client.Where {
+	return &client.Where{
+		Type:     client.ILIKE,
+		Name:     TestTableIDField,
+		Cast:     "text",
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *TestPredicate) IsNameLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: TestTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -252,8 +303,9 @@ func (t *TestPredicate) IsNameLike(v string) *client.Where {
 
 func (t *TestPredicate) IsNameILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     TestTableNameField,
+		Type: client.ILIKE,
+		Name: TestTableNameField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -261,8 +313,9 @@ func (t *TestPredicate) IsNameILike(v string) *client.Where {
 
 func (t *TestPredicate) IsTypeLike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.LIKE,
-		Name:     TestTableTypeField,
+		Type: client.LIKE,
+		Name: TestTableTypeField,
+
 		HasValue: true,
 		Value:    v,
 	}
@@ -270,8 +323,9 @@ func (t *TestPredicate) IsTypeLike(v string) *client.Where {
 
 func (t *TestPredicate) IsTypeILike(v string) *client.Where {
 	return &client.Where{
-		Type:     client.ILIKE,
-		Name:     TestTableTypeField,
+		Type: client.ILIKE,
+		Name: TestTableTypeField,
+
 		HasValue: true,
 		Value:    v,
 	}

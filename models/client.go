@@ -13,14 +13,21 @@ import (
 	"os"
 )
 
+type QueryObserver interface {
+	Before(ctx context.Context, sql string, args pgx.NamedArgs) context.Context
+	After(ctx context.Context, sql string, args pgx.NamedArgs, err error)
+}
+
 type Options struct {
-	Url   string
-	Debug bool
+	Url      string
+	Debug    bool
+	Observer QueryObserver
 }
 
 type IDatabase interface {
 	NewTransaction(ctx context.Context, options ...pgx.TxOptions) (client.DatabaseTransactionClient, error)
 	Transaction(ctx context.Context, fn func(tx client.DatabaseTransactionClient) error, options ...pgx.TxOptions) error
+	Tx(ctx context.Context, fn func(tx *Transaction) error, options ...pgx.TxOptions) error
 	Exit()
 	client.DatabaseClient
 }
@@ -32,29 +39,74 @@ type Database struct {
 }
 
 func (d *Database) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
-	commandTag, err = d.pool.Exec(ctx, sql, arguments[0])
+	var namedArgs pgx.NamedArgs
+	if len(arguments) > 0 {
+		if na, ok := arguments[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if d.Options.Observer != nil {
+		ctx = d.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	commandTag, err = d.pool.Exec(ctx, sql, arguments...)
+
+	if d.Options.Observer != nil {
+		d.Options.Observer.After(ctx, sql, namedArgs, err)
+	}
+
 	if err != nil {
-		d.Logger.LogError(ctx, sql, arguments[0].(pgx.NamedArgs), err)
+		d.Logger.LogError(ctx, sql, namedArgs, err)
 	} else if d.Options.Debug {
-		d.Logger.Log(ctx, sql, arguments[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return commandTag, err
 }
 
 func (d *Database) Query(ctx context.Context, sql string, args ...any) (rows pgx.Rows, err error) {
-	rows, err = d.pool.Query(ctx, sql, args[0])
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if d.Options.Observer != nil {
+		ctx = d.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	rows, err = d.pool.Query(ctx, sql, args...)
+
+	if d.Options.Observer != nil {
+		d.Options.Observer.After(ctx, sql, namedArgs, err)
+	}
+
 	if err != nil {
-		d.Logger.LogError(ctx, sql, args[0].(pgx.NamedArgs), err)
+		d.Logger.LogError(ctx, sql, namedArgs, err)
 	} else if d.Options.Debug {
-		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return rows, err
 }
 
 func (d *Database) QueryRow(ctx context.Context, sql string, args ...any) (row pgx.Row) {
-	row = d.pool.QueryRow(ctx, sql, args[0])
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if d.Options.Observer != nil {
+		ctx = d.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	row = d.pool.QueryRow(ctx, sql, args...)
+
+	if d.Options.Observer != nil {
+		d.Options.Observer.After(ctx, sql, namedArgs, nil)
+	}
+
 	if d.Options.Debug {
-		d.Logger.Log(ctx, sql, args[0].(pgx.NamedArgs))
+		d.Logger.Log(ctx, sql, namedArgs)
 	}
 	return row
 }
@@ -84,7 +136,7 @@ func (d *Database) NewTransaction(ctx context.Context, options ...pgx.TxOptions)
 		return nil, err
 	}
 
-	return &Transaction{Tx: tx}, nil
+	return &Transaction{Tx: tx, Logger: d.Logger, Options: d.Options}, nil
 }
 
 func (d *Database) Transaction(ctx context.Context, fn func(tx client.DatabaseTransactionClient) error, options ...pgx.TxOptions) error {
@@ -109,17 +161,97 @@ func (d *Database) Transaction(ctx context.Context, fn func(tx client.DatabaseTr
 	return tx.Commit(ctx)
 }
 
+func (d *Database) Tx(ctx context.Context, fn func(tx *Transaction) error, options ...pgx.TxOptions) error {
+	return d.Transaction(ctx, func(tx client.DatabaseTransactionClient) error {
+		return fn(tx.(*Transaction))
+	}, options...)
+}
+
 func (d *Database) Exit() {
 	d.pool.Close()
 }
 
 type Transaction struct {
-	Logger logger.Logger
+	Logger  logger.Logger
+	Options *Options
 	pgx.Tx
 }
 
 func (t Transaction) GetLogger() logger.Logger {
 	return t.Logger
+}
+
+func (t *Transaction) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
+	var namedArgs pgx.NamedArgs
+	if len(arguments) > 0 {
+		if na, ok := arguments[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if t.Options.Observer != nil {
+		ctx = t.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	commandTag, err = t.Tx.Exec(ctx, sql, arguments...)
+
+	if t.Options.Observer != nil {
+		t.Options.Observer.After(ctx, sql, namedArgs, err)
+	}
+
+	if err != nil {
+		t.Logger.LogError(ctx, sql, namedArgs, err)
+	} else if t.Options.Debug {
+		t.Logger.Log(ctx, sql, namedArgs)
+	}
+	return commandTag, err
+}
+
+func (t *Transaction) Query(ctx context.Context, sql string, args ...any) (rows pgx.Rows, err error) {
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if t.Options.Observer != nil {
+		ctx = t.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	rows, err = t.Tx.Query(ctx, sql, args...)
+
+	if t.Options.Observer != nil {
+		t.Options.Observer.After(ctx, sql, namedArgs, err)
+	}
+
+	if err != nil {
+		t.Logger.LogError(ctx, sql, namedArgs, err)
+	} else if t.Options.Debug {
+		t.Logger.Log(ctx, sql, namedArgs)
+	}
+	return rows, err
+}
+
+func (t *Transaction) QueryRow(ctx context.Context, sql string, args ...any) (row pgx.Row) {
+	var namedArgs pgx.NamedArgs
+	if len(args) > 0 {
+		if na, ok := args[0].(pgx.NamedArgs); ok {
+			namedArgs = na
+		}
+	}
+	if t.Options.Observer != nil {
+		ctx = t.Options.Observer.Before(ctx, sql, namedArgs)
+	}
+
+	row = t.Tx.QueryRow(ctx, sql, args...)
+
+	if t.Options.Observer != nil {
+		t.Options.Observer.After(ctx, sql, namedArgs, nil)
+	}
+
+	if t.Options.Debug {
+		t.Logger.Log(ctx, sql, namedArgs)
+	}
+	return row
 }
 
 func NewDB(options *Options) (IDatabase, error) {

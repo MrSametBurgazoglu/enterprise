@@ -3,6 +3,7 @@ package models
 
 import (
 	"context"
+	"iter"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"slices"
@@ -135,6 +136,10 @@ func (t *GroupList) GetDBName() string {
 	return GroupTableName
 }
 
+func (t *GroupList) IsListModel() bool {
+	return true
+}
+
 func (t *GroupList) GetRelationList() *client.RelationList {
 	return t.relations
 }
@@ -201,6 +206,54 @@ func (t *GroupList) MaxSurname() (string, error) {
 	var val string
 	a := new(client.Aggregate)
 	a.Max(GroupTableSurnameField, &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) SumName() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(GroupTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) AvgName() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(GroupTableNameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) SumSurname() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(GroupTableSurnameField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *GroupList) AvgSurname() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(GroupTableSurnameField, "numeric", &val)
 	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
 	if err != nil {
 		return val, err
@@ -486,6 +539,43 @@ func (t *Group) GetContext() context.Context {
 	return t.ctx
 }
 
+func (t *Group) WhereIf(cond bool, w client.PredicateI) *Group {
+	t.GroupPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *Group) WhereIn(cond bool, w client.PredicateI) *Group {
+	t.GroupPredicate.WhereIn(cond, w)
+	return t
+}
+
+func (t *Group) WhereIfFn(cond bool, fn func() client.PredicateI) *Group {
+	t.GroupPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *Group) Select(fields ...string) *Group {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case GroupTableIDField:
+			t.result.SelectID()
+
+		case GroupTableNameField:
+			t.result.SelectName()
+
+		case GroupTableSurnameField:
+			t.result.SelectSurname()
+
+		case GroupTableDataField:
+			t.result.SelectData()
+
+		}
+	}
+	return t
+}
+
 func (t *Group) Get() error {
 	return databaseGroupOperationHook(
 		t.ctx,
@@ -571,10 +661,39 @@ func (t *GroupList) List() error {
 	)
 }
 
+func (t *GroupList) ListWithTotal(skip, limit int) (int, error) {
+	total, err := t.Count()
+	if err != nil {
+		return 0, err
+	}
+	t.Paging(skip, limit)
+	err = t.List()
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (t *GroupList) WhereIf(cond bool, w client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIf(cond, w)
+	return t
+}
+
+func (t *GroupList) WhereIn(cond bool, w client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIn(cond, w)
+	return t
+}
+
 func (t *GroupList) Aggregate(f func(aggregate *client.Aggregate)) (func() error, error) {
 	a := new(client.Aggregate)
 	f(a)
 	return t.client.Aggregate(t.ctx, t.where, t, a)
+}
+
+func (t *GroupList) AggregateRows(f func(aggregate *client.Aggregate)) (func() error, func(), error) {
+	a := new(client.Aggregate)
+	f(a)
+	return t.client.AggregateRows(t.ctx, t.where, t, a)
 }
 
 func (t *GroupList) Create(list ...*Group) error {
@@ -633,6 +752,42 @@ func (t *GroupList) Delete(list ...*Group) error {
 	)
 }
 
+func (t *GroupList) DeleteWhere() (int64, error) {
+	var affected int64
+	err := databaseGroupListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkDelete,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.DeleteWhere(t.ctx, GroupTableName, t.where, t, GroupTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
+func (t *GroupList) UpdateWhere(set map[string]any) (int64, error) {
+	var affected int64
+	err := databaseGroupListOperationHook(
+		t.ctx,
+		client.NewOperationInfo(
+			GroupTableName,
+			client.OperationTypeBulkUpdate,
+		),
+		t,
+		func() error {
+			var err error
+			affected, err = t.client.UpdateWhere(t.ctx, GroupTableName, set, t.where, t, GroupTableIDField)
+			return err
+		},
+	)
+	return affected, err
+}
+
 func (t *GroupList) Order(field string) *GroupList {
 	t.order = append(t.order, &client.Order{Field: field})
 	return t
@@ -646,6 +801,82 @@ func (t *GroupList) OrderDesc(field string) *GroupList {
 func (t *GroupList) Paging(skip, limit int) *GroupList {
 	t.paging = &client.Paging{Skip: skip, Limit: limit}
 	return t
+}
+
+func (t *GroupList) WhereIfFn(cond bool, fn func() client.PredicateI) *GroupList {
+	t.GroupPredicate.WhereIfFn(cond, fn)
+	return t
+}
+
+func (t *GroupList) Select(fields ...string) *GroupList {
+	t.result.selectedFields = nil
+	for _, f := range fields {
+		switch f {
+
+		case GroupTableIDField:
+			t.result.SelectID()
+
+		case GroupTableNameField:
+			t.result.SelectName()
+
+		case GroupTableSurnameField:
+			t.result.SelectSurname()
+
+		case GroupTableDataField:
+			t.result.SelectData()
+
+		}
+	}
+	return t
+}
+
+func (t *GroupList) AggregateSeq(fn func(*client.Aggregate)) iter.Seq2[int, error] {
+	a := new(client.Aggregate)
+	fn(a)
+	return t.client.AggregateRowsSeq(t.ctx, t.where, t, a)
+}
+
+func (t *GroupList) GetByIDs(ids ...uuid.UUID) ([]*Group, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	t.Where(t.IsIDIN(ids...))
+	if err := t.List(); err != nil {
+		return nil, err
+	}
+	return t.Items, nil
+}
+
+func (t *GroupList) GetByIDsMap(ids ...uuid.UUID) (map[uuid.UUID]*Group, error) {
+	items, err := t.GetByIDs(ids...)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]*Group, len(items))
+	for _, item := range items {
+		res[item.GetPrimaryKey()] = item
+	}
+	return res, nil
+}
+
+func (t *GroupList) SumExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.SumExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
+}
+
+func (t *GroupList) AvgExpr(expr string, cast string, val any) error {
+	a := new(client.Aggregate)
+	a.AvgExpr(expr, cast, val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return err
+	}
+	return scanFunc()
 }
 
 type GroupResult struct {

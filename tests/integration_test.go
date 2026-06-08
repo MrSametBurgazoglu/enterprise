@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/MrSametBurgazoglu/enterprise/client"
 	"github.com/MrSametBurgazoglu/enterprise/migrate"
@@ -317,6 +318,48 @@ func TestIntegration(t *testing.T) {
 	err = scanFunc()
 	assert.NoError(t, err)
 	assert.True(t, countVal > 0)
+
+	// 8c. Test Has-Many Relation Loading (Get)
+	t.Log("Testing Has-Many Relation Loading (Get)...")
+	testModel := models.NewTest(ctx, db)
+	testModel.SetName("Parent Test")
+	testModel.SetType("some-type")
+	testModel.SetCreatedAt(time.Now())
+	err = testModel.Create()
+	assert.NoError(t, err)
+
+	child1 := models.NewDeneme(ctx, db)
+	child1.SetCount(1)
+	child1.SetDenemeType(models.DenemeTypeDeneme)
+	child1.SetTestIDValue(testModel.GetID())
+	err = child1.Create()
+	assert.NoError(t, err)
+
+	child2 := models.NewDeneme(ctx, db)
+	child2.SetCount(2)
+	child2.SetDenemeType(models.DenemeTypeTest)
+	child2.SetTestIDValue(testModel.GetID())
+	err = child2.Create()
+	assert.NoError(t, err)
+
+	// Fetch parent with children loaded (has-many relation) using Get()
+	fetchedParent := models.NewTest(ctx, db)
+	fetchedParent.WithDenemeList()
+	fetchedParent.Where(fetchedParent.IsIDEqual(testModel.GetID()))
+	err = fetchedParent.Get()
+	assert.NoError(t, err)
+
+	// We should get all the children!
+	assert.NotNil(t, fetchedParent.DenemeList)
+	assert.Len(t, fetchedParent.DenemeList.Items, 2)
+
+	// Clean up relation entities
+	err = child1.Delete()
+	assert.NoError(t, err)
+	err = child2.Delete()
+	assert.NoError(t, err)
+	err = testModel.Delete()
+	assert.NoError(t, err)
 
 	// 9. Test Delete
 	t.Log("Testing Delete...")
