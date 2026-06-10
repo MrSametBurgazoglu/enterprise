@@ -110,7 +110,12 @@ func (t *Table) AddIndex(name string, columnNames ...string) {
 	t.Indexes = append(t.Indexes, Index{Name: name, Columns: columnNames})
 }
 
+func (t *Table) AddUniqueIndex(name string, columnNames ...string) {
+	t.Indexes = append(t.Indexes, Index{Name: name, Columns: columnNames, Unique: true})
+}
+
 type Index struct {
 	Name    string
 	Columns []string
+	Unique  bool
 }

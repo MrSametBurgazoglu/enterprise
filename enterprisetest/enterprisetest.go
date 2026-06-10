@@ -27,7 +27,7 @@ func NewDB(t *testing.T) string {
 		"-p", fmt.Sprintf("%d:5432", port),
 		"-e", "POSTGRES_PASSWORD=password",
 		"-e", "POSTGRES_DB=enterprise",
-		"postgres:15-alpine",
+		"postgres:18.1-alpine",
 	)
 
 	if err := cmd.Run(); err != nil {

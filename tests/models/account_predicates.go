@@ -117,6 +117,24 @@ func (t *AccountPredicate) IsRoleEqual(v custom_data_type.UserRole) *client.Wher
 	}
 }
 
+func (t *AccountPredicate) IsBalanceEqual(v string) *client.Where {
+	return &client.Where{
+		Type:     client.EQ,
+		Name:     AccountTableBalanceField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsTagsEqual(v []string) *client.Where {
+	return &client.Where{
+		Type:     client.EQ,
+		Name:     AccountTableTagsField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsIDNotEqual(v uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.NEQ,
@@ -175,6 +193,24 @@ func (t *AccountPredicate) IsRoleNotEqual(v custom_data_type.UserRole) *client.W
 	return &client.Where{
 		Type:     client.NEQ,
 		Name:     AccountTableRoleField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsBalanceNotEqual(v string) *client.Where {
+	return &client.Where{
+		Type:     client.NEQ,
+		Name:     AccountTableBalanceField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsTagsNotEqual(v []string) *client.Where {
+	return &client.Where{
+		Type:     client.NEQ,
+		Name:     AccountTableTagsField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -243,6 +279,24 @@ func (t *AccountPredicate) IsRoleIN(v ...custom_data_type.UserRole) *client.Wher
 	}
 }
 
+func (t *AccountPredicate) IsBalanceIN(v ...string) *client.Where {
+	return &client.Where{
+		Type:     client.ANY,
+		Name:     AccountTableBalanceField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsTagsIN(v ...[]string) *client.Where {
+	return &client.Where{
+		Type:     client.ANY,
+		Name:     AccountTableTagsField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsIDNotIN(v ...uuid.UUID) *client.Where {
 	return &client.Where{
 		Type:     client.NANY,
@@ -301,6 +355,24 @@ func (t *AccountPredicate) IsRoleNotIN(v ...custom_data_type.UserRole) *client.W
 	return &client.Where{
 		Type:     client.NANY,
 		Name:     AccountTableRoleField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsBalanceNotIN(v ...string) *client.Where {
+	return &client.Where{
+		Type:     client.NANY,
+		Name:     AccountTableBalanceField,
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsTagsNotIN(v ...[]string) *client.Where {
+	return &client.Where{
+		Type:     client.NANY,
+		Name:     AccountTableTagsField,
 		HasValue: true,
 		Value:    v,
 	}
@@ -406,6 +478,26 @@ func (t *AccountPredicate) IsDenemeIDILike(v string) *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsBalanceLike(v string) *client.Where {
+	return &client.Where{
+		Type: client.LIKE,
+		Name: AccountTableBalanceField,
+
+		HasValue: true,
+		Value:    v,
+	}
+}
+
+func (t *AccountPredicate) IsBalanceILike(v string) *client.Where {
+	return &client.Where{
+		Type: client.ILIKE,
+		Name: AccountTableBalanceField,
+
+		HasValue: true,
+		Value:    v,
+	}
+}
+
 func (t *AccountPredicate) IsDenemeIDNil() *client.Where {
 	return &client.Where{
 		Type: client.NIL,
@@ -413,10 +505,24 @@ func (t *AccountPredicate) IsDenemeIDNil() *client.Where {
 	}
 }
 
+func (t *AccountPredicate) IsTagsNil() *client.Where {
+	return &client.Where{
+		Type: client.NIL,
+		Name: AccountTableTagsField,
+	}
+}
+
 func (t *AccountPredicate) IsDenemeIDNotNil() *client.Where {
 	return &client.Where{
 		Type: client.NNIL,
 		Name: AccountTableDenemeIDField,
+	}
+}
+
+func (t *AccountPredicate) IsTagsNotNil() *client.Where {
+	return &client.Where{
+		Type: client.NNIL,
+		Name: AccountTableTagsField,
 	}
 }
 

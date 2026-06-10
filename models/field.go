@@ -25,6 +25,8 @@ const (
 	FieldTypeByte
 	FieldTypeJSON
 	FieldTypeCustom
+	FieldTypeDecimal
+	FieldTypeStringArray
 )
 
 type FieldI interface {
@@ -42,6 +44,8 @@ type FieldI interface {
 	IsComparable() bool
 	GetSQLDefault() (string, bool)
 	CanUUID() bool
+	GetPrecision() int
+	GetScale() int
 }
 
 type Field struct {
@@ -61,6 +65,8 @@ type Field struct {
 	CanIn             bool
 	Serial            bool
 	CustomDBType      string
+	Precision         int
+	Scale             int
 	RequiredPackages  []string
 	defaultFunc       reflect.Value
 	DefaultFuncStruct *FuncStruct
@@ -116,6 +122,14 @@ func (f *Field) GetDBName() string {
 
 func (f *Field) GetCustomType() string {
 	return f.CustomDBType
+}
+
+func (f *Field) GetPrecision() int {
+	return f.Precision
+}
+
+func (f *Field) GetScale() int {
+	return f.Scale
 }
 
 func (f *Field) SetDBName(v string) {

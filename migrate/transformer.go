@@ -126,6 +126,9 @@ func TransformTableToAtlasTable(table *models.Table) *schema.Table {
 		}
 		schemaIndex := schema.NewIndex(index.Name)
 		schemaIndex.AddColumns(columns...)
+		if index.Unique {
+			schemaIndex.Unique = true
+		}
 		dbTable.Indexes = append(dbTable.Indexes, schemaIndex)
 	}
 
@@ -175,6 +178,17 @@ func TransformFieldToAtlasColumn(field models.FieldI) *schema.Column {
 		t = &schema.BinaryType{T: postgres.TypeBytea}
 	case models.FieldTypeJSON:
 		t = &schema.JSONType{T: postgres.TypeJSONB}
+	case models.FieldTypeDecimal:
+		t = &schema.DecimalType{
+			T:         postgres.TypeNumeric,
+			Precision: field.GetPrecision(),
+			Scale:     field.GetScale(),
+		}
+	case models.FieldTypeStringArray:
+		t = &postgres.ArrayType{
+			T:    "text[]",
+			Type: &schema.StringType{T: "text"},
+		}
 	case models.FieldTypeCustom:
 		if field.GetCustomType() == "text" {
 			t = &schema.StringType{T: "text"}

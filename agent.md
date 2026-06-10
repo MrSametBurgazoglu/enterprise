@@ -108,6 +108,8 @@ Templates use Go's `text/template` package. Run via `go run generate/generate.go
 | `FieldTypeUint` (serial) | `postgres.SerialType{T: TypeSerial}` |
 | `FieldTypeCustom` (`"text"`) | `schema.StringType{T: "text"}` |
 | `FieldTypeCustom` (other) | `schema.UnsupportedType{T: customType}` |
+| `FieldTypeDecimal` | `schema.DecimalType{T: postgres.TypeNumeric}` |
+| `FieldTypeStringArray` | `postgres.ArrayType{T: "text[]"}` |
 
 **Index columns** are resolved through a `fieldNameMap` (Go name → DB column name) before being passed to Atlas, ensuring column references use the actual snake_case DB names.
 

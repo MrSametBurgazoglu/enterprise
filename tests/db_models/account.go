@@ -20,6 +20,8 @@ func Account() *models.Table {
 			models.UUIDField("DenemeID").SetNillable(),
 			models.UintField("Serial").AddSerial(),
 			models.EnumField("Role", []string{"admin", "user"}).GoType(reflect.TypeOf(custom_data_type.UserRole(""))).Default("user"),
+			models.DecimalField("Balance", 10, 2).Default("0.00"),
+			models.StringArrayField("Tags").SetNillable(),
 		},
 		Relations: []*models.Relation{
 			models.ManyToOne(DenemeName, idField.DBName, "deneme_id"),
@@ -30,6 +32,7 @@ func Account() *models.Table {
 	tb.SetTableName(AccountName)
 	tb.SetIDField(idField)
 	tb.AddIndex("name_surname_index", "Name", "Surname")
+	tb.AddUniqueIndex("account_name_unique", "Name")
 
 	return tb
 }

@@ -22,6 +22,8 @@ const (
 	AccountTableDenemeIDField string = "deneme_id"
 	AccountTableSerialField   string = "serial"
 	AccountTableRoleField     string = "role"
+	AccountTableBalanceField  string = "balance"
+	AccountTableTagsField     string = "tags"
 )
 
 var databaseAccountOperationHook = func(ctx context.Context, operationInfo *client.OperationInfo, model *Account, operationFunc func() error) error {
@@ -72,6 +74,10 @@ type Account struct {
 	serial uint
 
 	role custom_data_type.UserRole
+
+	balance string
+
+	tags *[]string
 
 	changedFields     map[string]any
 	changedFieldsList []string
@@ -369,6 +375,30 @@ func (t *AccountList) AvgSerial() (float64, error) {
 	return val, err
 }
 
+func (t *AccountList) SumBalance() (string, error) {
+	var val string
+	a := new(client.Aggregate)
+	a.SumCast(AccountTableBalanceField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
+func (t *AccountList) AvgBalance() (float64, error) {
+	var val float64
+	a := new(client.Aggregate)
+	a.AvgCast(AccountTableBalanceField, "numeric", &val)
+	scanFunc, err := t.client.Aggregate(t.ctx, t.where, t, a)
+	if err != nil {
+		return val, err
+	}
+	err = scanFunc()
+	return val, err
+}
+
 func (t *Account) SetID(v uuid.UUID) {
 	t.id = v
 	t.SetIDField()
@@ -397,10 +427,23 @@ func (t *Account) SetRole(v custom_data_type.UserRole) {
 	t.role = v
 	t.SetRoleField()
 }
+func (t *Account) SetBalance(v string) {
+	t.balance = v
+	t.SetBalanceField()
+}
+func (t *Account) SetTags(v *[]string) {
+	t.tags = v
+	t.SetTagsField()
+}
 
 func (t *Account) SetDenemeIDValue(v uuid.UUID) {
 	t.SetDenemeID(&v)
 	t.SetDenemeIDField()
+}
+
+func (t *Account) SetTagsValue(v []string) {
+	t.SetTags(&v)
+	t.SetTagsField()
 }
 
 func (t *Account) SetIDNillable(v *uuid.UUID) {
@@ -439,6 +482,12 @@ func (t *Account) SetRoleNillable(v *custom_data_type.UserRole) {
 		return
 	}
 	t.SetRole(*v)
+}
+func (t *Account) SetBalanceNillable(v *string) {
+	if v == nil {
+		return
+	}
+	t.SetBalance(*v)
 }
 
 func (t *Account) ParseID(v string) error {
@@ -492,6 +541,9 @@ func (t *Account) GetSerialNillable() *uint {
 func (t *Account) GetRoleNillable() *custom_data_type.UserRole {
 	return &t.role
 }
+func (t *Account) GetBalanceNillable() *string {
+	return &t.balance
+}
 
 func (t *Account) NameIN(v ...string) bool {
 	return slices.Contains(v, t.name)
@@ -513,6 +565,10 @@ func (t *Account) RoleIN(v ...custom_data_type.UserRole) bool {
 	return slices.Contains(v, t.role)
 }
 
+func (t *Account) BalanceIN(v ...string) bool {
+	return slices.Contains(v, t.balance)
+}
+
 func (t *Account) NameNotIN(v ...string) bool {
 	return !slices.Contains(v, t.name)
 }
@@ -531,6 +587,10 @@ func (t *Account) SerialNotIN(v ...uint) bool {
 
 func (t *Account) RoleNotIN(v ...custom_data_type.UserRole) bool {
 	return !slices.Contains(v, t.role)
+}
+
+func (t *Account) BalanceNotIN(v ...string) bool {
+	return !slices.Contains(v, t.balance)
 }
 
 func (t *Account) GetID() uuid.UUID {
@@ -568,6 +628,23 @@ func (t *Account) GetSerial() uint {
 
 func (t *Account) GetRole() custom_data_type.UserRole {
 	return t.role
+}
+
+func (t *Account) GetBalance() string {
+	return t.balance
+}
+
+func (t *Account) GetTags() *[]string {
+	return t.tags
+}
+
+func (t *Account) GetTagsValue() []string {
+	if t.tags == nil {
+		var zero []string
+		return zero
+
+	}
+	return *t.tags
 }
 
 func (t *Account) SetIDField() {
@@ -616,6 +693,20 @@ func (t *Account) SetRoleField() {
 	if _, exist := t.changedFields[AccountTableRoleField]; !exist {
 		t.changedFields[AccountTableRoleField] = t.role
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableRoleField)
+	}
+
+}
+func (t *Account) SetBalanceField() {
+	if _, exist := t.changedFields[AccountTableBalanceField]; !exist {
+		t.changedFields[AccountTableBalanceField] = t.balance
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableBalanceField)
+	}
+
+}
+func (t *Account) SetTagsField() {
+	if _, exist := t.changedFields[AccountTableTagsField]; !exist {
+		t.changedFields[AccountTableTagsField] = t.tags
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableTagsField)
 	}
 
 }
@@ -780,6 +871,12 @@ func (t *Account) SetDefaults() {
 		t.changedFieldsList = append(t.changedFieldsList, AccountTableRoleField)
 	}
 
+	if _, exist := t.changedFields[AccountTableBalanceField]; !exist {
+		t.balance = "0.00"
+		t.changedFields[AccountTableBalanceField] = t.balance
+		t.changedFieldsList = append(t.changedFieldsList, AccountTableBalanceField)
+	}
+
 	v := &client.SelectedField{Name: AccountTableSerialField, Value: &t.serial}
 	t.serialFields = append(t.serialFields, v)
 
@@ -809,6 +906,8 @@ func (t *Account) ScanResult() {
 	t.denemeid = t.result.denemeid
 	t.serial = t.result.serial
 	t.role = t.result.role
+	t.balance = t.result.balance
+	t.tags = t.result.tags
 
 	if _, ok := t.relations.RelationMap["deneme"]; ok {
 		if t.Deneme == nil {
@@ -898,6 +997,12 @@ func (t *Account) Select(fields ...string) *Account {
 
 		case AccountTableRoleField:
 			t.result.SelectRole()
+
+		case AccountTableBalanceField:
+			t.result.SelectBalance()
+
+		case AccountTableTagsField:
+			t.result.SelectTags()
 
 		}
 	}
@@ -1162,6 +1267,12 @@ func (t *AccountList) Select(fields ...string) *AccountList {
 		case AccountTableRoleField:
 			t.result.SelectRole()
 
+		case AccountTableBalanceField:
+			t.result.SelectBalance()
+
+		case AccountTableTagsField:
+			t.result.SelectTags()
+
 		}
 	}
 	return t
@@ -1224,6 +1335,8 @@ type AccountResult struct {
 	denemeid *uuid.UUID
 	serial   uint
 	role     custom_data_type.UserRole
+	balance  string
+	tags     *[]string
 
 	selectedFields []*client.SelectedField
 
@@ -1289,6 +1402,16 @@ func (t *AccountResult) SelectRole() {
 	t.selectedFields = append(t.selectedFields, v)
 }
 
+func (t *AccountResult) SelectBalance() {
+	v := &client.SelectedField{Name: AccountTableBalanceField, Value: &t.balance}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
+func (t *AccountResult) SelectTags() {
+	v := &client.SelectedField{Name: AccountTableTagsField, Value: &t.tags}
+	t.selectedFields = append(t.selectedFields, v)
+}
+
 func (t *AccountResult) GetDBName() string {
 	return AccountTableName
 }
@@ -1301,6 +1424,8 @@ func (t *AccountResult) SelectAll() {
 	t.SelectDenemeID()
 	t.SelectSerial()
 	t.SelectRole()
+	t.SelectBalance()
+	t.SelectTags()
 
 }
 

@@ -361,6 +361,36 @@ func TestIntegration(t *testing.T) {
 	err = testModel.Delete()
 	assert.NoError(t, err)
 
+	// 8d. Test Unique Index, Decimal, and String Array fields
+	t.Log("Testing Unique Index, Decimal, and String Array...")
+	acc1 := models.NewAccount(ctx, db)
+	acc1.SetName("UniqueAcc")
+	acc1.SetSurname("User")
+	acc1.SetBalance("1234.56")
+	acc1.SetTagsValue([]string{"vip", "active"})
+	err = acc1.Create()
+	assert.NoError(t, err)
+
+	// Check unique index violation
+	acc2 := models.NewAccount(ctx, db)
+	acc2.SetName("UniqueAcc") // Duplicate name
+	acc2.SetSurname("User2")
+	acc2.SetBalance("0.00")
+	err = acc2.Create()
+	assert.Error(t, err) // Should fail due to unique constraint!
+
+	// Fetch acc1 and verify fields
+	fetchedAcc := models.NewAccount(ctx, db)
+	fetchedAcc.Where(fetchedAcc.IsIDEqual(acc1.GetID()))
+	err = fetchedAcc.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, "1234.56", fetchedAcc.GetBalance())
+	assert.Equal(t, []string{"vip", "active"}, []string(fetchedAcc.GetTagsValue()))
+
+	// Clean up account
+	err = acc1.Delete()
+	assert.NoError(t, err)
+
 	// 9. Test Delete
 	t.Log("Testing Delete...")
 	err = txFetched.Delete()
