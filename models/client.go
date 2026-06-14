@@ -29,6 +29,7 @@ type IDatabase interface {
 	Transaction(ctx context.Context, fn func(tx client.DatabaseTransactionClient) error, options ...pgx.TxOptions) error
 	Tx(ctx context.Context, fn func(tx *Transaction) error, options ...pgx.TxOptions) error
 	Exit()
+	Stat() *pgxpool.Stat
 	client.DatabaseClient
 }
 
@@ -169,6 +170,11 @@ func (d *Database) Tx(ctx context.Context, fn func(tx *Transaction) error, optio
 
 func (d *Database) Exit() {
 	d.pool.Close()
+}
+
+// Stat returns the underlying pgxpool connection-pool statistics.
+func (d *Database) Stat() *pgxpool.Stat {
+	return d.pool.Stat()
 }
 
 type Transaction struct {
